@@ -298,17 +298,17 @@ class Ui_MainWindow(object):
 
     def click_openAr(self):
         type_command = "020F000200020101"
-        print("def click_openO выполнено")
+        print("def click_openAr выполнено")
         self.fn_sendcmd(type_command) 
         
     def click_closeO(self):
         type_command = "010F000200020102"
-        print("def click_openO выполнено")
+        print("def click_closeO выполнено")
         self.fn_sendcmd(type_command)
         
     def click_closeAr(self):
         type_command = "020F000200020102"
-        print("def click_openO выполнено")
+        print("def click_closeAr выполнено")
         self.fn_sendcmd(type_command)
         
     def click_regulateO(self):
@@ -318,8 +318,8 @@ class Ui_MainWindow(object):
         
     def click_regulateAr(self):
         type_command = "020F000200020100"
-        print("def click_openO выполнено")
-        self.output() #!!!!!!!!!!!!
+        print("def click_regulateAr выполнено")
+        self.output() #!!!!!!!!!!!! # это неправильная функция, с помощью нее я пытался понять, почему не записываются нормально значения в Lable
 
     def click_installO(self):
         value_flow = self.lineEdit.text() #значение из TextEdit в строку
@@ -369,7 +369,7 @@ class Ui_MainWindow(object):
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()
 
-    def output(self):
+    def output(self): #отладочная функция переодической записи в Lable
         for i in range(10):
             a = random.randint(0,10)
             self.label_realflowAr.setText(str(a))
