@@ -9,6 +9,10 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
+from threading import * 
+import random 
+from time import time, sleep
 
 
 class Ui_MainWindow(object):
@@ -234,6 +238,15 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.btn_openO.clicked.connect(self.click_open0) #функции нажатия на кнопки
+        self.btn_openAr.clicked.connect(self.click_openAr)
+        self.btn_closeO.clicked.connect(self.click_closeO)
+        self.btn_closeAr.clicked.connect(self.click_closeAr)
+        self.btn_regulateO.clicked.connect(self.click_regulateO)
+        self.btn_regulateAr.clicked.connect(self.click_regulateAr)
+        self.btn_installO.clicked.connect(self.click_installO)
+        self.btn_installAr.clicked.connect(self.click_installAr)
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -265,6 +278,102 @@ class Ui_MainWindow(object):
         self.label_13.setText(_translate("MainWindow", "Заданный"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "Ar"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
+
+    def fn_sendcmd(self, number):                                       # извлекаем содержимое ячеек
+        print("def fn_sendcmd получило значение - ", number)                         # данные
+        self.ed_id= number[0:2]                           # адрес устройства ID
+        print(self.ed_id)
+        self.ed_cmd=number[2:4]                           # номер команды
+        print(self.ed_cmd)
+        self.ed_adr=number[4:8]                           # адрес регистра
+        print(self.ed_adr)
+        self.ed_count=number[8:17]                          # данные
+        print(self.ed_count)
+        #self.ed_count=str(hex(4000))[2:len(str(hex(4000)))]
+
+    def click_open0(self):
+        type_command = "010F000200020101"
+        print("def click_openO выполнено")
+        self.fn_sendcmd(type_command) 
+
+    def click_openAr(self):
+        type_command = "020F000200020101"
+        print("def click_openO выполнено")
+        self.fn_sendcmd(type_command) 
+        
+    def click_closeO(self):
+        type_command = "010F000200020102"
+        print("def click_openO выполнено")
+        self.fn_sendcmd(type_command)
+        
+    def click_closeAr(self):
+        type_command = "020F000200020102"
+        print("def click_openO выполнено")
+        self.fn_sendcmd(type_command)
+        
+    def click_regulateO(self):
+        type_command = "010F000200020100"
+        print("def click_regulateO выполнено")
+        self.fn_sendcmd(type_command)
+        
+    def click_regulateAr(self):
+        type_command = "020F000200020100"
+        print("def click_openO выполнено")
+        self.output() #!!!!!!!!!!!!
+
+    def click_installO(self):
+        value_flow = self.lineEdit.text() #значение из TextEdit в строку
+        if value_flow.isnumeric() == True:
+            value_flow = int(value_flow)
+            procent = int((value_flow/90)*10000)
+            procent1 = hex(procent)
+            procent1=str(procent1)
+            print("отчивка", procent1)
+            if len(procent1) < 6:
+                procent2 = "0" + procent1[2:6]
+                print(procent2)
+            else:
+                procent2 = procent1[2:6]
+            print("def click_installO выполнено", procent2)
+            type_command = "01060004" + procent2
+            print(type_command)
+            self.fn_sendcmd(type_command)
+        else: 
+            self.show_error(value_flow)
+
+    def click_installAr(self):
+        value_flow = self.text_givenAr.text() #значение из TextEdit в строку
+        if value_flow.isnumeric() == True:
+            value_flow = int(value_flow)
+            procent = int((value_flow/90)*10000*1.45)
+            procent1 = hex(procent)
+            procent1=str(procent1)
+            print("отчивка", procent1)
+            if len(procent1) < 6:
+                procent2 = "0" + procent1[2:6]
+                print(procent2)
+            else:
+                procent2 = procent1[2:6]
+            print("def click_installO выполнено", procent2)
+            type_command = "01060004" + procent2
+            print(type_command)
+            self.fn_sendcmd(type_command)
+        else: 
+            self.show_error(value_flow)
+
+    def show_error(self, number): #вывод ошибки 
+        error = QMessageBox()
+        error.setWindowTitle("Ошибка")
+        error.setText('Введено некорректное значение потока ')
+        error.setIcon(QMessageBox.Warning)
+        error.setStandardButtons(QMessageBox.Ok)
+        error.exec()
+
+    def output(self):
+        for i in range(10):
+            a = random.randint(0,10)
+            self.label_realflowAr.setText(str(a))
+            print(a)
 
 
 if __name__ == "__main__":
