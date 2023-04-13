@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QMessageBox
 from threading import * 
 import random 
 from time import time, sleep
-
+from PyQt5.QtCore import QBasicTimer, QDateTime #Импортируем
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -247,6 +247,10 @@ class Ui_MainWindow(object):
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
 
+        self.TimeSignal = QtCore.QTime(0,0,0) #Обозначаем временную переменную и присваиваем начальное значение: 0 часов, 0 мин, 0 сек
+        self.TimerSignal = QtCore.QTimer() #Обозначаем таймер
+        self.TimerSignal.timeout.connect(self.TimerSignal_def) #Соединяем  таймер с модулем, который будет выполняться этим таймером
+        self.TimerSignal.start(1000) #Запускаем таймер, который будет выполнять соединенный с ним модуль каждые 1000 мс
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -374,6 +378,16 @@ class Ui_MainWindow(object):
             a = random.randint(0,10)
             self.label_realflowAr.setText(str(a))
             print(a)
+  
+
+
+    def TimerSignal_def(self):
+        self.TimeSignal = self.TimeSignal.addSecs(1)
+        if self.TimeSignal == QtCore.QTime(0,0,200000000):
+            print('Таймер остановлен')
+            self.TimerSignal.stop()   #Остановка таймера
+        else:
+            print('Таймер работает ', self.TimeSignal)
 
 
 if __name__ == "__main__":
