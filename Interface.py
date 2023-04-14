@@ -16,9 +16,9 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(633, 246)
         MainWindow.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"background-color: rgb(7, 7, 7);\n"
-"background-color: rgb(0, 0, 0);\n"
-"background-color: rgb(74, 74, 74);")
+                                 "background-color: rgb(7, 7, 7);\n"
+                                 "background-color: rgb(0, 0, 0);\n"
+                                 "background-color: rgb(74, 74, 74);")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         font = QtGui.QFont()
         font.setPointSize(20)
@@ -269,6 +269,7 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
