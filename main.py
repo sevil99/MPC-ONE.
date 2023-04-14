@@ -74,17 +74,9 @@ class UIMainWindow:
         self.default_font = settings.default_font
         self.main_window = QtWidgets.QMainWindow()
         self.main_window.setObjectName("MainWindow")
-        self.main_window.resize(633, 246)
-        self.main_window.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-                                       "background-color: rgb(7, 7, 7);\n"
-                                       "background-color: rgb(0, 0, 0);\n"
-                                       "background-color: rgb(74, 74, 74);")
-        self.widget = QtWidgets.QWidget(self.main_window)
-        self.widget.setFont(QtGui.QFont(self.default_font, pointSize=20))
-        self.widget.setStyleSheet("background-color: rgb(16, 16, 16);")
-        self.widget.setObjectName("centralwidget")
-
-        self.tabWidget = UICustom.UITabWidget.get("tabWidget", self.widget, [0, 0, 641, 251])
+        self.main_window.setFixedSize(640, 250)
+        self.main_window.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.tabWidget = UICustom.UITabWidget.get("tabWidget", self.main_window, [0, 0, 640, 250])
 
         self.tab_3 = QtWidgets.QWidget()
         self.tab_3.setMinimumSize(QtCore.QSize(0, 305))
@@ -249,7 +241,7 @@ class UIMainWindow:
         self.tab_5 = QtWidgets.QWidget()
         self.tab_5.setObjectName("tab_5")
         self.tabWidget.addTab(self.tab_5, "")
-        self.main_window.setCentralWidget(self.widget)
+        self.main_window.setCentralWidget(self.tabWidget)
 
         self.retranslate_data()
 
