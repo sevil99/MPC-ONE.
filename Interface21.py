@@ -9,12 +9,11 @@
 
 import sys
 import threading
-from PyQt5.QtWidgets import *
-from PyQt5 import QtCore, QtGui, QtWidgets, uic 
-from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QWidget
-import random 
-
 import time
+import random 
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QWidget
+from PyQt5 import QtCore, QtGui, QtWidgets, uic 
 from time import time, sleep
 from PyQt5.QtCore import QBasicTimer, QDateTime, QThread
 from PyQt5.QtCore import pyqtSignal, QObject
@@ -25,9 +24,12 @@ import Interface
 
 class parallel_Thread(QThread):
     value_signal=pyqtSignal(str) #сигнал, который будет передаваться из потока в основной клас
+    def __init__(self, arg):
+        super().__init__()
+        self.arg = arg
     def run(self):
         def print_value():
-            a = "02 03 0004 0002"
+            a = self.arg
             b = self.fn_sendcmd(a)
             self.value_signal.emit(str(b)) #установка связи между сигналами 
             print(a)
@@ -54,9 +56,12 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         
-        self.ThreadO = parallel_Thread(self) #создание потока
+        self.ThreadO = parallel_Thread('010300040002') #создание потока
+        self.ThreadAr = parallel_Thread('020300040002')
         self.ThreadO.start()
-        self.ThreadO.value_signal.connect(self.updatelabeltext) #передаем значение из другого потока 
+        self.ThreadAr.start()
+        self.ThreadO.value_signal.connect(self.updatelabeltextO) #передаем значение из другого потока 
+        self.ThreadAr.value_signal.connect(self.updatelabeltextAr) 
 
         self.btn_openO.clicked.connect(self.click_open0) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
@@ -67,9 +72,12 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
     
-    def updatelabeltext(self, str):
+    def updatelabeltextAr(self, str):
         self.label_realflowAr.setText(str)
 
+    def updatelabeltextO(self, str):
+        self.label_realflowO.setText(str)
+    
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MPC ONE"))
