@@ -14,6 +14,7 @@ from threading import *
 import random 
 from time import time, sleep
 from PyQt5.QtCore import QBasicTimer, QDateTime #Импортируем
+import threading
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -247,10 +248,9 @@ class Ui_MainWindow(object):
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
 
-        self.TimeSignal = QtCore.QTime(0,0,0) #Обозначаем временную переменную и присваиваем начальное значение: 0 часов, 0 мин, 0 сек
-        self.TimerSignal = QtCore.QTimer() #Обозначаем таймер
-        self.TimerSignal.timeout.connect(self.TimerSignal_def) #Соединяем  таймер с модулем, который будет выполняться этим таймером
-        self.TimerSignal.start(1000) #Запускаем таймер, который будет выполнять соединенный с ним модуль каждые 1000 мс
+        thread1 = threading.Thread(target=self.start_timer,args =()) #Обозначение потока тут что-то с классами, надо разобраться
+        thread1.start()
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -323,8 +323,8 @@ class Ui_MainWindow(object):
     def click_regulateAr(self):
         type_command = "020F000200020100"
         print("def click_regulateAr выполнено")
-        self.output() #!!!!!!!!!!!! # это неправильная функция, с помощью нее я пытался понять, почему не записываются нормально значения в Lable
-
+        self.fn_sendcmd(type_command)
+        
     def click_installO(self):
         value_flow = self.lineEdit.text() #значение из TextEdit в строку
         if value_flow.isnumeric() == True:
@@ -374,21 +374,28 @@ class Ui_MainWindow(object):
         error.exec()
 
     def output(self): #отладочная функция переодической записи в Lable
-        for i in range(10):
+        self.TimeSignal = self.TimeSignal.addSecs(1)
+        if self.TimeSignal == QtCore.QTime(0,0,20000000):
+            print('Таймер остановлен')
+            self.TimerSignal.stop()   #Остановка таймера !!! Надо это потом добавить в функцию закрытия программы 
+        else: 
             a = random.randint(0,10)
             self.label_realflowAr.setText(str(a))
             print(a)
-  
 
+    def start_timer(self):
+        self.TimeSignal = QtCore.QTime(0,0,0) #Обозначаем временную переменную и присваиваем начальное значение: 0 часов, 0 мин, 0 сек
+        self.TimerSignal = QtCore.QTimer() #Обозначаем таймер
+        self.TimerSignal.timeout.connect(self.output) #Соединяем  таймер с модулем, который будет выполняться этим таймером
+        self.TimerSignal.start(1000)
 
     def TimerSignal_def(self):
         self.TimeSignal = self.TimeSignal.addSecs(1)
-        if self.TimeSignal == QtCore.QTime(0,0,200000000):
+        if self.TimeSignal == QtCore.QTime(0,0,2):
             print('Таймер остановлен')
-            self.TimerSignal.stop()   #Остановка таймера
+            self.TimerSignal.stop()   #Остановка таймера. 
         else:
             print('Таймер работает ', self.TimeSignal)
-
 
 if __name__ == "__main__":
     import sys

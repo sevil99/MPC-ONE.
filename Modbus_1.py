@@ -95,7 +95,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         #self.Exit.setIcon(icon_switch_off)                      # добавляет иконку
         #self.Exit.setIconSize(QtCore.QSize(57, 57))
 
-    def fn_sendcmd(self, number):                                       # передаем в эту функцию команду, которую она дальше разбивает на части
+    def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части
         print("def fn_sendcmd получило значение - ", number)          
         self.ed_id= number[0:2]                           # адрес устройства ID
         print(self.ed_id)
