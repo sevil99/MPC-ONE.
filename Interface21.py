@@ -27,33 +27,27 @@ class parallel_Thread(QThread):
     value_signal=pyqtSignal(str) #сигнал, который будет передаваться из потока в основной клас
     def run(self):
         def print_value():
-            a = random.randint(0,10)
-            self.value_signal.emit(str(a)) #установка связи между сигналами 
+            a = "02 03 0004 0002"
+            b = self.fn_sendcmd(a)
+            self.value_signal.emit(str(b)) #установка связи между сигналами 
             print(a)
         timer = QTimer()
         timer.timeout.connect(print_value)
-        timer.start(1000)
+        timer.start(2000)
         self.exec_()
-        
-    #def run(self):
-    #    print('run install')
-    #    self.TimeSignal = QtCore.QTime(0,0,0) #Обозначаем временную переменную и присваиваем начальное значение: 0 часов, 0 мин, 0 сек
-    #    self.TimerSignal = QtCore.QTimer() #Обозначаем таймер
-    #    self.TimerSignal.timeout.connect(self.print_value) #Соединяем  таймер с модулем, который будет выполняться этим таймером
-    #    self.TimerSignal.start(1000)
-        #print_value()
 
-    #def print_value(self):
-        #self.TimeSignal = self.TimeSignal.addSecs(1) #Пример как добавить в временную переменную. Так как модуль повторяется каждые 1000 мс, и мы в модуле добовляем 1 сек, то по сути это таймер.
-        #if self.TimeSignal < QtCore.QTime(0,0,20000000000):   #Пример как можно добавить действие в заданное время
-        #    self.TimerSignal.stop()
-        #else:
-        #    a = random.randint(0,10)
-        #    self.value_signal.emit(str(a)) #установка связи между сигналами 
-        #    print(a)
-    
-
-
+    def fn_sendcmd(self, number):                                      # извлекаем содержимое ячеек
+        print("def fn_sendcmd получило значение - ", number)                         # данные
+        self.ed_id= number[0:2]                           # адрес устройства ID
+        print(self.ed_id)
+        self.ed_cmd=number[2:4]                           # номер команды
+        print(self.ed_cmd)
+        self.ed_adr=number[4:8]                           # адрес регистра
+        print(self.ed_adr)
+        self.ed_count=number[8:17]                          # данные
+        print(self.ed_count)
+        a = random.randint(0,100)
+        return(a)
 
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
@@ -117,7 +111,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         print(self.ed_adr)
         self.ed_count=number[8:17]                          # данные
         print(self.ed_count)
-        #self.ed_count=str(hex(4000))[2:len(str(hex(4000)))]
 
     def click_open0(self):
         type_command = "010F000200020101"
@@ -151,8 +144,8 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         
     def click_installO(self):
         value_flow = self.lineEdit.text() #значение из TextEdit в строку
-        if value_flow.isnumeric() == True:
-            value_flow = int(value_flow)
+        try:
+            value_flow = float(value_flow)
             procent = int((value_flow/90)*10000)
             procent1 = hex(procent)
             procent1=str(procent1)
@@ -166,13 +159,13 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             type_command = "01060004" + procent2
             print(type_command)
             self.fn_sendcmd(type_command)
-        else: 
+        except: 
             self.show_error(value_flow)
 
     def click_installAr(self):
         value_flow = self.text_givenAr.text() #значение из TextEdit в строку
-        if value_flow.isnumeric() == True:
-            value_flow = int(value_flow)
+        try:
+            value_flow = float(value_flow)
             procent = int((value_flow/90)*10000*1.45)
             procent1 = hex(procent)
             procent1=str(procent1)
@@ -183,10 +176,10 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             else:
                 procent2 = procent1[2:6]
             print("def click_installO выполнено", procent2)
-            type_command = "01060004" + procent2
+            type_command = "02060004" + procent2
             print(type_command)
             self.fn_sendcmd(type_command)
-        else: 
+        except: 
             self.show_error(value_flow)
 
     def show_error(self, number): #вывод ошибки 
