@@ -12,8 +12,10 @@ from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets, uic 
 from PyQt5.QtWidgets import QMessageBox
 import random 
+import time
 from time import time, sleep
-from PyQt5.QtCore import QBasicTimer, QDateTime, QThread #Импортируем
+from PyQt5.QtCore import QBasicTimer, QDateTime, QThread
+from PyQt5.QtCore import pyqtSignal, QObject
 
 from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import QCoreApplication, QBasicTimer, QDateTime, Qt, QSize
@@ -21,16 +23,15 @@ import Interface
 
 class parallel_Thread(QThread):
 
+    value_signal=pyqtSignal(str) #сигнал, который будет передаваться из потока в основной клас
+
     def _init_(self):
         QThread._init_(self)
-
-    def set(self):
-        self.WorkWindow = uic.loadUi('Interface2.ui')
 
     def run(self):
         while True:
             a = random.randint(0,10)
-            #self.label_realflowAr.setText(str(a))
+            self.value_signal.emit(str(a)) #установка связи между сигналами 
             print(a)
             sleep(3)
 
@@ -40,6 +41,10 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         
+        self.ThreadO = parallel_Thread() #создание потока
+        self.ThreadO.start()
+        self.ThreadO.value_signal.connect(self.updatelabeltext) #передаем значение из другого потока 
+
         self.btn_openO.clicked.connect(self.click_open0) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
         self.btn_closeO.clicked.connect(self.click_closeO)
@@ -48,7 +53,9 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_regulateAr.clicked.connect(self.click_regulateAr)
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
-
+    
+    def updatelabeltext(self, str):
+        self.label_realflowAr.setText(str)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
