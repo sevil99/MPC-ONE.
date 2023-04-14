@@ -1,0 +1,1 @@
+default_font = "MS Shell Dlg 2"

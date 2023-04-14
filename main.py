@@ -3,6 +3,8 @@ import sys
 import threading
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
+import settings
+from typing import List
 
 
 def show_error():
@@ -17,13 +19,44 @@ def show_error():
     error.exec()
 
 
+class UITabWidget:
+    """
+    Класс табов
+    """
+
+    def __init__(self, name: str, widget: QtWidgets.QWidget, size: List[int]):
+        self.tab = QtWidgets.QTabWidget(widget)
+        if len(size) != 4:
+            raise Exception("Передан список размера окна не с 4 параметрами")
+        self.tab.setGeometry(QtCore.QRect(*size))
+        self.tab.setMinimumSize(QtCore.QSize(200, 200))
+        self.tab.setMaximumSize(QtCore.QSize(1920, 400))
+        self.tab.setFont(QtGui.QFont(settings.default_font, pointSize=20))
+        self.tab.setObjectName(name)
+
+
+class UILabel:
+    """
+    Класс текстового поля
+    """
+
+    def __init__(self, widget: QtWidgets.QWidget, name: str, size: List[int], color: List[int] = None, font_size=13):
+        if color is None:
+            color = [111, 111, 111]
+        self.label = QtWidgets.QLabel(widget)
+        self.label.setGeometry(QtCore.QRect(*size))
+        self.label.setFont(QtGui.QFont(settings.default_font, pointSize=font_size))
+        self.label.setStyleSheet(f"background-color: rgb({color[0]}, {color[1]}, {color[2]});")
+        self.label.setObjectName(name)
+
+
 class UIMainWindow:
     """
     Класс главного окна с тремя виджитами - Кислород, Ar и монитор
     """
 
     def __init__(self):
-        self.default_font = "MS Shell Dlg 2"
+        self.default_font = settings.default_font
         self.main_window = QtWidgets.QMainWindow()
         self.main_window.setObjectName("MainWindow")
         self.main_window.resize(633, 246)
@@ -35,22 +68,14 @@ class UIMainWindow:
         self.widget.setFont(QtGui.QFont(self.default_font, pointSize=20))
         self.widget.setStyleSheet("background-color: rgb(16, 16, 16);")
         self.widget.setObjectName("centralwidget")
-        self.tabWidget = QtWidgets.QTabWidget(self.widget)
-        self.tabWidget.setGeometry(QtCore.QRect(0, 0, 641, 251))
-        self.tabWidget.setMinimumSize(QtCore.QSize(0, 231))
-        self.tabWidget.setMaximumSize(QtCore.QSize(16777215, 400))
-        self.tabWidget.setFont(QtGui.QFont(self.default_font, pointSize=20))
-        self.tabWidget.setObjectName("tabWidget")
+
+        self.tabWidget = UITabWidget("tabWidget", self.widget, [0, 0, 641, 251])
 
         self.tab_3 = QtWidgets.QWidget()
         self.tab_3.setMinimumSize(QtCore.QSize(0, 305))
         self.tab_3.setObjectName("tab_3")
 
-        self.label_7 = QtWidgets.QLabel(self.tab_3)
-        self.label_7.setGeometry(QtCore.QRect(425, 50, 16, 20))
-        self.label_7.setFont(QtGui.QFont(self.default_font, pointSize=13))
-        self.label_7.setStyleSheet("background-color: rgb(111, 111, 111);")
-        self.label_7.setObjectName("label_7")
+        self.label_7 = UILabel(self.tab_3, "label_7", [425, 50, 16, 20])
 
         self.btn_closeO = QtWidgets.QPushButton(self.tab_3)
         self.btn_closeO.setGeometry(QtCore.QRect(150, 100, 150, 100))
@@ -135,7 +160,7 @@ class UIMainWindow:
         self.label_11.setStyleSheet("background-color: rgb(111, 111,111);")
         self.label_11.setObjectName("label_11")
 
-        self.tabWidget.addTab(self.tab_3, "")
+        self.tabWidget.tab.addTab(self.tab_3, "")
 
         self.tab_4 = QtWidgets.QWidget()
         self.tab_4.setObjectName("tab_4")
@@ -202,7 +227,7 @@ class UIMainWindow:
         self.btn_regulateO.raise_()
         self.btn_openO.raise_()
         self.label_6.raise_()
-        self.label_7.raise_()
+        self.label_7.label.raise_()
         self.btn_closeO.raise_()
         self.label.raise_()
         self.label_3.raise_()
@@ -225,15 +250,15 @@ class UIMainWindow:
         self.label_12.raise_()
         self.label_13.raise_()
 
-        self.tabWidget.addTab(self.tab_4, "")
+        self.tabWidget.tab.addTab(self.tab_4, "")
         self.tab_5 = QtWidgets.QWidget()
         self.tab_5.setObjectName("tab_5")
-        self.tabWidget.addTab(self.tab_5, "")
+        self.tabWidget.tab.addTab(self.tab_5, "")
         self.main_window.setCentralWidget(self.widget)
 
         self.retranslate_data()
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.tab.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(self.main_window)
         event_button = {
             self.btn_openO: self.click_open0,
@@ -252,7 +277,7 @@ class UIMainWindow:
     def retranslate_data(self):
         _translate = QtCore.QCoreApplication.translate
         self.main_window.setWindowTitle(_translate("MainWindow", "MPC ONE"))
-        self.label_7.setText(_translate("MainWindow", "2"))
+        self.label_7.label.setText(_translate("MainWindow", "2"))
         self.btn_closeO.setText(_translate("MainWindow", "Закрыть O"))
         self.label.setText(_translate("MainWindow", "2"))
         self.label_3.setText(_translate("MainWindow", "2"))
@@ -267,7 +292,7 @@ class UIMainWindow:
         self.label_9.setText(_translate("MainWindow", "2"))
         self.label_10.setText(_translate("MainWindow", "Реальный"))
         self.label_11.setText(_translate("MainWindow", "Заданный"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "O2"))
+        self.tabWidget.tab.setTabText(self.tabWidget.tab.indexOf(self.tab_3), _translate("MainWindow", "O2"))
         self.btn_installAr.setText(_translate("MainWindow", "Установить Ar"))
         self.btn_closeAr.setText(_translate("MainWindow", "Закрыть Ar"))
         self.btn_regulateAr.setText(_translate("MainWindow", "Регулировать Ar"))
@@ -277,8 +302,8 @@ class UIMainWindow:
         self.btn_openAr.setText(_translate("MainWindow", "Открыть Ar"))
         self.label_12.setText(_translate("MainWindow", "Реальный"))
         self.label_13.setText(_translate("MainWindow", "Заданный"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "Ar"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
+        self.tabWidget.tab.setTabText(self.tabWidget.tab.indexOf(self.tab_4), _translate("MainWindow", "Ar"))
+        self.tabWidget.tab.setTabText(self.tabWidget.tab.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
 
     def fn_sendcmd(self, number):  # извлекаем содержимое ячеек
         print("def fn_sendcmd получило значение - ", number)  # данные
