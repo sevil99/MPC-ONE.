@@ -4,7 +4,7 @@ import threading
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 import settings
-from typing import List
+from typing import List, Optional
 
 
 def show_error():
@@ -20,19 +20,24 @@ def show_error():
 
 
 class UICustom:
-    class UIBase:
-        @staticmethod
-        def get(name: str, widget: QtWidgets.QWidget, size: List[int]):
-            pass
+    widget = None
 
-    class UITabWidget(UIBase):
+    def __init__(self, widget: QtWidgets.QWidget):
+        UICustom.set_widget(widget)
+
+    @staticmethod
+    def set_widget(widget: QtWidgets.QWidget):
+        UICustom.widget = widget
+
+    class UITabWidget:
         """
         Класс табов
         """
 
         @staticmethod
-        def get(name: str, widget: QtWidgets.QWidget, size: List[int]):
-            tab = QtWidgets.QTabWidget(widget)
+        def create(size: List[int],
+                   name: str):
+            tab = QtWidgets.QTabWidget(UICustom.widget)
             if len(size) != 4:
                 raise Exception("Передан список размера окна не с 4 параметрами")
             tab.setGeometry(QtCore.QRect(*size))
@@ -42,27 +47,36 @@ class UICustom:
             tab.setObjectName(name)
             return tab
 
-    class UILabel(UIBase):
+    class UILabel:
         """
         Класс текстового поля со статическими методами для настройки
         """
 
         @staticmethod
-        def get(widget: QtWidgets.QWidget,
-                name: str,
-                text: str,
-                size: List[int],
-                color: List[int] = None,
-                font_size=13):
+        def create(text: Optional[str],
+                   size: List[int],
+                   name: Optional[str] = None,
+                   color: List[int] = None,
+                   font_size: int = 13):
             if color is None:
                 color = [111, 111, 111]
-            label = QtWidgets.QLabel(widget)
+            label = QtWidgets.QLabel(UICustom.widget)
             label.setGeometry(QtCore.QRect(*size))
             label.setFont(QtGui.QFont(settings.default_font, pointSize=font_size))
             label.setStyleSheet(f"background-color: rgb({color[0]}, {color[1]}, {color[2]});")
             label.setObjectName(name)
             label.setText(text)
             return label
+
+    class UIButton:
+        """
+        Класс кнопки
+        """
+        @staticmethod
+        def create(text: Optional[str],
+                   size: List[int],
+                   name: Optional[str] = None):
+            pass
 
 
 class UIMainWindow:
@@ -76,78 +90,55 @@ class UIMainWindow:
         self.main_window.setObjectName("MainWindow")
         self.main_window.setFixedSize(640, 250)
         self.main_window.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.tabWidget = UICustom.UITabWidget.get("tabWidget", self.main_window, [0, 0, 640, 250])
+        ui = UICustom(self.main_window)
+        self.tab_base = ui.UITabWidget.create([0, 0, 640, 250], "tabWidget")
+        self.tab_oxygen = ui.UITabWidget.create([0, 0, 0, 305], "tab_oxygen")
 
-        self.tab_3 = QtWidgets.QWidget()
-        self.tab_3.setMinimumSize(QtCore.QSize(0, 305))
-        self.tab_3.setObjectName("tab_3")
+        ui.set_widget(self.tab_oxygen)
 
-        self.label_7 = UICustom.UILabel.get(self.tab_3, "label_7", "2", [425, 50, 16, 20])
-        self.label = UICustom.UILabel.get(self.tab_3, "label", "2", [122, 150, 16, 20])
-        self.label_3 = UICustom.UILabel.get(self.tab_3, "label_3", "2", [270, 150, 16, 20])
-        self.label_2 = UICustom.UILabel.get(self.tab_3, "label_2", "Поток 0", [0, 0, 300, 100], [111] * 3, 20)
-        self.label_realflowO = UICustom.UILabel.get(self.tab_3, "label_realflowO", "0.00", [140, 10, 151, 71], [111] * 3, 20)
-        self.label_6 = UICustom.UILabel.get(self.tab_3, "label_6", "Поток 0", [310, 0, 320, 100], font_size=20)
-        self.label_5 = UICustom.UILabel.get(self.tab_3, "label_5", "3", [115, 50, 16, 20])
+        self.label_2 = ui.UILabel.create("Поток 0", [0, 0, 300, 100], "label_2", [111] * 3, 20)
+        self.label_realflowO = ui.UILabel.create("0.00", [140, 10, 151, 71], "label_realflowO", [111] * 3, 20)
+        self.label_6 = ui.UILabel.create("Поток 0", [310, 0, 320, 100], font_size=20)
+        self.label_10 = ui.UILabel.create("Реальный", [10, 65, 91, 21])
+        self.label_11 = ui.UILabel.create("Заданный", [325, 65, 91, 21])
+        # Степени
+        self.label_7 = ui.UILabel.create("2", [425, 50, 16, 20])
+        self.label = ui.UILabel.create("2", [100, 150, 16, 20])
+        self.label_3 = ui.UILabel.create("2", [270, 150, 16, 20])
+        self.label_5 = ui.UILabel.create("2", [95, 50, 16, 20])
+        self.label_4 = ui.UILabel.create("2", [450, 150, 16, 20])
+        self.label_9 = ui.UILabel.create("2", [620, 155, 10, 20])
 
-        self.label_5 = QtWidgets.QLabel(self.tab_3)
-        self.label_5.setGeometry(QtCore.QRect(115, 50, 16, 20))
-        self.label_5.setFont(QtGui.QFont(self.default_font, pointSize=13))
-        self.label_5.setStyleSheet("background-color: rgb(111, 111, 111);")
-        self.label_5.setObjectName("label_5")
-
-        self.btn_closeO = QtWidgets.QPushButton(self.tab_3)
+        self.btn_closeO = QtWidgets.QPushButton(self.tab_oxygen)
         self.btn_closeO.setGeometry(QtCore.QRect(150, 100, 150, 100))
         self.btn_closeO.setFont(QtGui.QFont(self.default_font, pointSize=13))
         self.btn_closeO.setStyleSheet("background-color: rgb(111, 111, 111);")
         self.btn_closeO.setObjectName("btn_closeO")
 
-        self.btn_openO = QtWidgets.QPushButton(self.tab_3)
+        self.btn_openO = QtWidgets.QPushButton(self.tab_oxygen)
         self.btn_openO.setGeometry(QtCore.QRect(0, 100, 150, 100))
         self.btn_openO.setStyleSheet("background-color: rgb(111, 111, 111);")
         self.btn_openO.setObjectName("btn_openO")
 
-        self.btn_regulateO = QtWidgets.QPushButton(self.tab_3)
+        self.btn_regulateO = QtWidgets.QPushButton(self.tab_oxygen)
         self.btn_regulateO.setGeometry(QtCore.QRect(470, 100, 160, 100))
         self.btn_regulateO.setFont(QtGui.QFont(self.default_font, pointSize=15))
         self.btn_regulateO.setStyleSheet("background-color: rgb(111, 111, 111);")
         self.btn_regulateO.setObjectName("btn_regulateO")
 
-        self.btn_installO = QtWidgets.QPushButton(self.tab_3)
+        self.btn_installO = QtWidgets.QPushButton(self.tab_oxygen)
         self.btn_installO.setGeometry(QtCore.QRect(310, 100, 160, 100))
         self.btn_installO.setFont(QtGui.QFont(self.default_font, pointSize=15))
         self.btn_installO.setStyleSheet("background-color: rgb(111, 111, 111);")
         self.btn_installO.setObjectName("btn_installO")
 
-
-
-        self.label_4 = QtWidgets.QLabel(self.tab_3)
-        self.label_4.setGeometry(QtCore.QRect(450, 150, 16, 20))
-        self.label_4.setStyleSheet("background-color: rgb(111, 111, 111);")
-        self.label_4.setObjectName("label_4")
-
-        self.label_9 = QtWidgets.QLabel(self.tab_3)
-        self.label_9.setGeometry(QtCore.QRect(620, 155, 5, 10))
-        self.label_9.setStyleSheet("background-color: rgb(111, 111, 111);")
-        self.label_9.setObjectName("label_9")
-
-        self.label_10 = QtWidgets.QLabel(self.tab_3)
-        self.label_10.setGeometry(QtCore.QRect(10, 65, 91, 21))
-        self.label_10.setStyleSheet("background-color: rgb(111, 111,111);")
-        self.label_10.setObjectName("label_10")
-
-        self.lineEdit = QtWidgets.QLineEdit(self.tab_3)
+        self.lineEdit = QtWidgets.QLineEdit(self.tab_oxygen)
         self.lineEdit.setGeometry(QtCore.QRect(440, 10, 151, 71))
         self.lineEdit.setFont(QtGui.QFont(self.default_font, pointSize=20))
         self.lineEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lineEdit.setObjectName("lineEdit")
 
-        self.label_11 = QtWidgets.QLabel(self.tab_3)
-        self.label_11.setGeometry(QtCore.QRect(325, 65, 91, 21))
-        self.label_11.setStyleSheet("background-color: rgb(111, 111,111);")
-        self.label_11.setObjectName("label_11")
-
-        self.tabWidget.addTab(self.tab_3, "")
+        self.tab_base.addTab(self.tab_oxygen, "")
 
         self.tab_4 = QtWidgets.QWidget()
         self.tab_4.setObjectName("tab_4")
@@ -237,15 +228,15 @@ class UIMainWindow:
         self.label_12.raise_()
         self.label_13.raise_()
 
-        self.tabWidget.addTab(self.tab_4, "")
+        self.tab_base.addTab(self.tab_4, "")
         self.tab_5 = QtWidgets.QWidget()
         self.tab_5.setObjectName("tab_5")
-        self.tabWidget.addTab(self.tab_5, "")
-        self.main_window.setCentralWidget(self.tabWidget)
+        self.tab_base.addTab(self.tab_5, "")
+        self.main_window.setCentralWidget(self.tab_base)
 
         self.retranslate_data()
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tab_base.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(self.main_window)
         event_button = {
             self.btn_openO: self.click_open0,
@@ -268,11 +259,7 @@ class UIMainWindow:
         self.btn_openO.setText(_translate("MainWindow", "Открыть O"))
         self.btn_regulateO.setText(_translate("MainWindow", "Регулировать O"))
         self.btn_installO.setText(_translate("MainWindow", "Установить О"))
-        self.label_4.setText(_translate("MainWindow", "2"))
-        self.label_9.setText(_translate("MainWindow", "2"))
-        self.label_10.setText(_translate("MainWindow", "Реальный"))
-        self.label_11.setText(_translate("MainWindow", "Заданный"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "O2"))
+        self.tab_base.setTabText(self.tab_base.indexOf(self.tab_oxygen), _translate("MainWindow", "O2"))
         self.btn_installAr.setText(_translate("MainWindow", "Установить Ar"))
         self.btn_closeAr.setText(_translate("MainWindow", "Закрыть Ar"))
         self.btn_regulateAr.setText(_translate("MainWindow", "Регулировать Ar"))
@@ -282,8 +269,8 @@ class UIMainWindow:
         self.btn_openAr.setText(_translate("MainWindow", "Открыть Ar"))
         self.label_12.setText(_translate("MainWindow", "Реальный"))
         self.label_13.setText(_translate("MainWindow", "Заданный"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "Ar"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
+        self.tab_base.setTabText(self.tab_base.indexOf(self.tab_4), _translate("MainWindow", "Ar"))
+        self.tab_base.setTabText(self.tab_base.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
 
     def fn_sendcmd(self, number):  # извлекаем содержимое ячеек
         print("def fn_sendcmd получило значение - ", number)  # данные
