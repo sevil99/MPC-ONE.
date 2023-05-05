@@ -22,49 +22,12 @@ from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import QCoreApplication, QBasicTimer, QDateTime, Qt, QSize, QTimer
 import Interface
 
-class parallel_Thread(QThread):
-    value_signal=pyqtSignal(str) #сигнал, который будет передаваться из потока в основной клас
-    def __init__(self, arg):
-        super().__init__()
-        self.arg = arg
-    def run(self):
-        def print_value():
-            a = self.arg
-            b = self.fn_sendcmd(a)
-            self.value_signal.emit(str(b)) #установка связи между сигналами 
-            print(a)
-        timer = QTimer()
-        timer.timeout.connect(print_value)
-        timer.start(2000)
-        self.exec_()
-
-    def fn_sendcmd(self, number):                                      # извлекаем содержимое ячеек
-        print("def fn_sendcmd получило значение - ", number)                         # данные
-        self.ed_id= number[0:2]                           # адрес устройства ID
-        print(self.ed_id)
-        self.ed_cmd=number[2:4]                           # номер команды
-        print(self.ed_cmd)
-        self.ed_adr=number[4:8]                           # адрес регистра
-        print(self.ed_adr)
-        self.ed_count=number[8:17]                          # данные
-        print(self.ed_count)
-        a = random.randint(0,100)
-        sleep(1)
-        return(a)
-
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        
-        # self.ThreadO = parallel_Thread('010300040002') #создание потока
-        # self.ThreadAr = parallel_Thread('020300040002')
-        # self.ThreadO.start()
-        # self.ThreadAr.start()
-        # self.ThreadO.value_signal.connect(self.updatelabeltextO) #передаем значение из другого потока 
-        # self.ThreadAr.value_signal.connect(self.updatelabeltextAr) 
 
-        self.btn_openO.clicked.connect(self.start_readout) #функции нажатия на кнопки
+        self.btn_openO.clicked.connect(self.click_openO) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
         self.btn_closeO.clicked.connect(self.click_closeO)
         self.btn_closeAr.clicked.connect(self.click_closeAr)
@@ -72,6 +35,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_regulateAr.clicked.connect(self.click_regulateAr)
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
+    
+    def showEvent(self, event): #запускает программу при при её открытии 
+        global current_command 
+        current_command = '010F000200020101'
+        self.start_readout()
 
     def start_readout(self):
         global current_command 
@@ -142,18 +110,14 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def fn_sendcmd(self, number):                                       # извлекаем содержимое ячеек
         print("def fn_sendcmd получило значение - ", number)                         # данные
         self.ed_id= number[0:2]                           # адрес устройства ID
-        #print(self.ed_id)
         self.ed_cmd=number[2:4]                           # номер команды
-        #print(self.ed_cmd)
         self.ed_adr=number[4:8]                           # адрес регистра
-        #print(self.ed_adr)
         self.ed_count=number[8:17]                          # данные
-        #print(self.ed_count)
         global flow_value
         flow_value = str(random.randint(0,100))
         sleep(1)
 
-    def click_open0(self):
+    def click_openO(self):
         global current_command  
         current_command = "010F000200020101"
         type_command = "010F000200020101"
@@ -239,7 +203,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         except: 
             self.show_error(value_flow)
 
-
     def show_error(self, number): #вывод ошибки 
         error = QMessageBox()
         error.setWindowTitle("Ошибка")
@@ -247,9 +210,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         error.setIcon(QMessageBox.Warning)
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()
-
-    
-    
     
 def main():                                                     # открытие главного окна
     app = QApplication(sys.argv)
