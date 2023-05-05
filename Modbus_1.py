@@ -10,14 +10,17 @@ import busio
 import binascii
 import minimalmodbus
 from RPi import GPIO
-
-from PyQt5.QtGui import QIcon, QFont, QPixmap
-from PyQt5.QtCore import QCoreApplication, QBasicTimer, QDateTime, Qt, QSize
-from PyQt5 import QtCore, QtWidgets, QtGui
+import threading
 from PyQt5.QtWidgets import *
-from PyQt5.QtWidgets import QMessageBox
-
+from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QWidget
+from PyQt5 import QtCore, QtGui, QtWidgets, uic 
+from time import time, sleep
+from PyQt5.QtCore import QBasicTimer, QDateTime, QThread
+from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtGui import QIcon, QFont, QPixmap
+from PyQt5.QtCore import QCoreApplication, QBasicTimer, QDateTime, Qt, QSize, QTimer
 import Interface
+
 
 # DU_Pin_Rpi_Master=18       # Пин, который определяет RPi - Master или Slave при использовании MAX485
 
@@ -69,6 +72,221 @@ CRC_Low=[
     0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
     0x40]
 
+class parallel_Thread(QThread):
+    value_signal=pyqtSignal(str) #сигнал, который будет передаваться из потока в основной клас
+    def run(self):
+        def print_value():
+            a = "020300040002"
+            b = self.fn_sendcmd(a)
+            self.value_signal.emit(str(b)) #установка связи между сигналами 
+            print(a)
+        timer = QTimer()
+        timer.timeout.connect(print_value)
+        timer.start(2000)
+        self.exec_()
+    
+    def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части
+        print("def fn_sendcmd получило значение - ", number)          
+        self.ed_id= number[0:2]                           # адрес устройства ID
+        print(self.ed_id)
+        self.ed_cmd=number[2:4]                           # номер команды
+        print(self.ed_cmd)
+        self.ed_adr=number[4:8]                           # адрес регистра
+        print(self.ed_adr)
+        self.ed_count=number[8:17]                          # данные
+        print(self.ed_count)
+        #self.ed_count=str(hex(4000))[2:len(str(hex(4000)))]
+        print(self.ed_count)
+        global send_arr
+        self.send_arr=[]                                        # разбивка на байты отправляемого массива (по смыслу)
+        self.id_=self.get_bt(self.ed_id)
+        #print(self.id_)
+        self.cmd=self.get_bt(self.ed_cmd)
+        #print(self.cmd)
+        self.adrh, self.adrl=self.get_highlow(self.ed_adr)
+        #print(self.adrh)
+        #print(self.adrl)
+        self.send_arr.append(hex(self.id_))
+        #print(hex(self.id_))
+        self.send_arr.append(hex(self.cmd))
+        #print(hex(self.cmd))
+        self.send_arr.append(hex(self.adrh))
+        #print(hex(self.adrh))
+        self.send_arr.append(hex(self.adrl))
+        #print(hex(self.adrl))
+        cmd_num=int(self.ed_cmd,16)                             # обработка разных по типу кадров (в зависимости от команды)
+        #print(self.ed_cmd)
+        #print(cmd_num)
+        if cmd_num==3:                                          # чтение
+            self.counth, self.countl=self.get_highlow(self.ed_count)
+            self.send_arr.append(hex(self.counth))
+            self.send_arr.append(hex(self.countl))
+        elif cmd_num==6:                                        # запись одного регистра
+            self.counth, self.countl=self.get_highlow(self.ed_count)
+            print(self.counth)
+            print(self.countl)
+            self.send_arr.append(hex(self.counth))
+            print(hex(self.counth))
+            self.send_arr.append(hex(self.countl))
+            print(hex(self.countl))
+        elif cmd_num==15:                                       # групповая запись
+            self.count_1=self.ed_count[:4]                      # вычленяем количество флагов
+            self.count_2=self.ed_count[4:]                      # ввычленяем количество байт и данные
+            if (len(self.count_2)<4):
+                #self.TE_1.setText("Ошибка в количестве данных")
+                print("function work")
+                cmd_num=0
+            else:
+                self.counth, self.countl=self.get_highlow(self.count_1)
+                self.send_arr.append(hex(self.counth))              # присоединяем 2 байта (1 и 2 половина количества флагов)
+                self.send_arr.append(hex(self.countl))
+
+                self.bytes=int(self.count_2[:2],16)                 # вычленяем количество байт и переводим в 10 сс
+
+                self.count_2=self.count_2[2:]                       # вычленяем данные
+                self.send_arr.append(hex(self.bytes))               # присоединяем 1 байт (количество байтов)
+                i=0
+                while i<self.bytes:                                 # вычленяем данные по 1 байту и записываем
+                    self.data=int(self.count_2[:2],16)
+                    self.count_2=self.count_2[2:]
+                    i=i+1
+                    self.send_arr.append(hex(self.data))
+        else:
+            #self.TE_1.setText("Такой команды нет")
+            print("Такой команды нет")
+
+        if (cmd_num==3 or cmd_num==6 or cmd_num==15):               # Если команда существует
+            self.addcrc(self.send_arr)                              # расчитаем CRC
+            low,high=self.addcrc(self.send_arr)
+            self.send_arr.append(low)                               # добавляем CRC
+            self.send_arr.append(high)
+            #self.TE_1.setText("Запрос:")
+            #self.TE_1.append(self.print_list(self.send_arr))
+            print("Запрос:")
+            print(self.send_arr)
+            self.result=bytes([int(x,16) for x in self.send_arr])   # переводим массив строк hex в байты (представляет некоторые байты символом ASCII это норма)
+            s.write(self.result)                                    # отправлем собранный пакет
+            self.ls_in=s.read(256)                                  # читаем собранный пакет
+            print(self.ls_in)
+            self.ls_in=str("".join("\\x{:02x}".format(c) for c in self.ls_in)) # преобразование в нормальный формат
+            print(self.ls_in)
+            result_hex_list=[]
+            if len(self.ls_in)<1:                                    # проверка есть ли ответ
+                print("РРГ не отвечает")
+            else:
+                print("Принятый пакет:")
+                address=self.ls_in[2:4]                             # узнаём адрес устройства
+                result_hex_list.append(address)
+                command=self.ls_in[6:8]                             # узнаём номер команды
+                result_hex_list.append(command)
+                if command=="03":                                   # в зависимости от номера команды вычленяем остальные данные
+                    # чтение из нескольких регистров
+                    kol_bytes=self.ls_in[10:12]
+                    result_hex_list.append(kol_bytes)
+                    for i in range(int(kol_bytes, 16)):
+                        data=self.ls_in[14+4*i:16+4*i]#
+                        result_hex_list.append(data)
+                    crc1=self.ls_in[18+4*i:20+4*i]
+                    crc2=self.ls_in[22+4*i:24+4*i]
+                    result_hex_list.append(crc1)
+                    result_hex_list.append(crc2)
+                else:
+                    if command=="06":
+                        # запись значения в один регистр
+                        adress_reg1=self.ls_in[10:12]
+                        result_hex_list.append(adress_reg1)
+                        adress_reg2=self.ls_in[14:16]
+                        result_hex_list.append(adress_reg2)
+                        data1=self.ls_in[18:20]
+                        result_hex_list.append(data1)
+                        data2=self.ls_in[22:24]
+                        result_hex_list.append(data2)
+                        crc1=self.ls_in[26:28]
+                        result_hex_list.append(crc1)
+                        crc2=self.ls_in[30:32]
+                        result_hex_list.append(crc2)
+                    else:
+                        if command=="0f":
+                            # запись значений в несколько регистров флагов
+                            adress_reg1=self.ls_in[10:12]
+                            result_hex_list.append(adress_reg1)
+                            adress_reg2=self.ls_in[14:16]
+                            result_hex_list.append(adress_reg2)
+                            kol_f1=self.ls_in[18:20]
+                            result_hex_list.append(kol_f1)
+                            kol_f2=self.ls_in[22:24]
+                            result_hex_list.append(kol_f2)
+                            crc1=self.ls_in[26:28]
+                            result_hex_list.append(crc1)
+                            crc2=self.ls_in[30:32]
+                            result_hex_list.append(crc2)
+                        else:
+                            # ошибка
+                            error_num=self.ls_in[10:12]
+                            result_hex_list.append(error_num)
+                            crc1=self.ls_in[14:16]
+                            result_hex_list.append(crc1)
+                            crc2=self.ls_in[18:20]
+                            result_hex_list.append(crc2)
+                result_hex_list_str=self.print_list2(result_hex_list)
+                #self.TE_1.append(result_hex_list_str)               # выводим полученный пакет на экран
+                print("выводим полученный пакет")
+                crc2_=result_hex_list.pop(len(result_hex_list)-1)   # удаляем и запоминаем старое CRC
+                crc1_=result_hex_list.pop(len(result_hex_list)-1)
+                crc1_new,crc2_new=self.addcrc(result_hex_list)      # считаем новое CRC для полученного сообщения
+                if (int(crc1,16)==int(crc1_new,16))&(int(crc2,16)==int(crc2_new,16)): # сравниваем CRC
+                    #self.TE_1.append("Правильная контрольная сумма")
+                    print("Правильная контрольная сумма")
+                else:
+                    #self.TE_1.append("Ошибочная контрольная сумма")
+                    print("Ошибочная контрольная сумма")
+        return(result_hex_list_str)
+    
+    def Exit_(self):                                            # при выходе из программы
+        s.close()                                               # закрываем порт
+        #GPIO.cleanup()                                          # очищаем пины
+        self.close()                                            # закрываем главное окно
+
+    def get_bt(self, tmps):                                     # извлекаем число из поля txt
+        bt=int(tmps[-2:],16)
+        return bt
+
+    def get_highlow(self,tmps):                                 # разбиваем строку на 2 байта
+        tmpl=int(tmps[-2:],16)
+        tmph=int(tmps[-4:-2],16)
+        return tmph, tmpl
+
+    def print_list(self, ls):
+        str_result=""                                           # формируем строчку для вывода на экран (запрос)
+        for ch in ls:
+            if len(ch[2:])==1:
+                str_result=str_result+"0"+ch[2:]+"  "
+            else:
+                str_result=str_result+ch[2:]+"  "
+        return (str_result)
+
+    def print_list2(self, ls):
+        str_result=""                                           # формируем строчку для вывода на экран (ответ)
+        for ch in ls:
+            str_result=str_result+"  "+ch
+        return (str_result[2:])
+
+    def crc16bt(self, data):
+        i_CRC_High=hex(0xFF)
+        i_CRC_Low=hex(0xFF)
+        index=hex(0x0000)
+        for bt in data:
+            index=(int(i_CRC_Low,16) ^ int(bt,16))              # index - в 10 сс
+            i_CRC_Low=hex(int(i_CRC_High,16) ^ int(hex(CRC_High[index]),16))
+            i_CRC_High=hex(int(hex(CRC_Low[index]),16))
+        return (hex((int(i_CRC_High,16)<<8) | int(i_CRC_Low,16)))
+
+    def addcrc(self, ls):                                       # вычисляет байты CRC и добавляет в конец list
+        self.crc=self.crc16bt(ls)
+        self.crc_low=hex(int(self.crc,16) & int(hex(0xFF),16))
+        self.crc_high=hex((int(self.crc,16)>>8) & int(hex(0xFF),16))
+        return self.crc_low, self.crc_high
+
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
@@ -82,18 +300,25 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_regulateAr.clicked.connect(self.click_regulateAr)
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
+
+        self.ThreadO = parallel_Thread(self) #создание потока
+        self.ThreadO.start()
+        self.ThreadO.value_signal.connect(self.updatelabeltext) #передаем значение из другого потока 
         
 
         #self.Exit.clicked.connect(self.Exit_)                   # клик на кнопку ВЫХОД
         #GPIO.setmode(GPIO.BCM)                                  # Инициализация пина RPi - Master (используется при MAX485)
         #GPIO.setup(DU_Pin_Rpi_Master, GPIO.OUT)
         #GPIO.output(DU_Pin_Rpi_Master, True)
-        self.setGeometry(-1, -1, 809, 409)                        # расположение главновго окна
+        self.setGeometry(80, 80, 809, 409)                        # расположение главновго окна
         #self.setWindowFlags(Qt.FramelessWindowHint)             # убирает шапку приложения
         #icon_switch_off = QtGui.QIcon()                         # картинка на кнопке ВЫХОД
         #icon_switch_off.addPixmap(QtGui.QPixmap("/home/pi/Desktop/Modbus/close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         #self.Exit.setIcon(icon_switch_off)                      # добавляет иконку
         #self.Exit.setIconSize(QtCore.QSize(57, 57))
+
+    def updatelabeltext(self, str):
+        self.label_realflowAr.setText(str)
 
     def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части
         print("def fn_sendcmd получило значение - ", number)          
@@ -253,6 +478,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                     #self.TE_1.append("Ошибочная контрольная сумма")
                     print("Ошибочная контрольная сумма")
 
+
     def Exit_(self):                                            # при выходе из программы
         s.close()                                               # закрываем порт
         #GPIO.cleanup()                                          # очищаем пины
@@ -330,8 +556,8 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
 
     def click_installO(self):
         value_flow = self.lineEdit.text() #значение из TextEdit в строку
-        if value_flow.isnumeric() == True:
-            value_flow = int(value_flow)
+        try:
+            value_flow = float(value_flow)
             procent = int((value_flow/90)*10000)
             procent1 = hex(procent)
             procent1=str(procent1)
@@ -345,26 +571,27 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             type_command = "01060004" + procent2
             print(type_command)
             self.fn_sendcmd(type_command)
-        else: 
+        except: 
             self.show_error(value_flow)
 
     def click_installAr(self):
         value_flow = self.text_givenAr.text() #значение из TextEdit в строку
-        if value_flow.isnumeric() == True:
-            value_flow = int(value_flow)
+        try:
+            value_flow = float(value_flow)
             procent = int((value_flow/90)*10000*1.45)
             procent1 = hex(procent)
             procent1=str(procent1)
+            print("отчивка", procent1)
             if len(procent1) < 6:
                 procent2 = "0" + procent1[2:6]
                 print(procent2)
             else:
                 procent2 = procent1[2:6]
-            print("def click_installAr выполнено", procent2)
-            type_command = "01060004" + procent2
+            print("def click_installO выполнено", procent2)
+            type_command = "02060004" + procent2
             print(type_command)
             self.fn_sendcmd(type_command)
-        else: 
+        except: 
             self.show_error(value_flow)
 
     def show_error(self, number): #вывод ошибки 

@@ -49,6 +49,7 @@ class parallel_Thread(QThread):
         self.ed_count=number[8:17]                          # данные
         print(self.ed_count)
         a = random.randint(0,100)
+        sleep(1)
         return(a)
 
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
@@ -56,14 +57,14 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         
-        self.ThreadO = parallel_Thread('010300040002') #создание потока
-        self.ThreadAr = parallel_Thread('020300040002')
-        self.ThreadO.start()
-        self.ThreadAr.start()
-        self.ThreadO.value_signal.connect(self.updatelabeltextO) #передаем значение из другого потока 
-        self.ThreadAr.value_signal.connect(self.updatelabeltextAr) 
+        # self.ThreadO = parallel_Thread('010300040002') #создание потока
+        # self.ThreadAr = parallel_Thread('020300040002')
+        # self.ThreadO.start()
+        # self.ThreadAr.start()
+        # self.ThreadO.value_signal.connect(self.updatelabeltextO) #передаем значение из другого потока 
+        # self.ThreadAr.value_signal.connect(self.updatelabeltextAr) 
 
-        self.btn_openO.clicked.connect(self.click_open0) #функции нажатия на кнопки
+        self.btn_openO.clicked.connect(self.start_readout) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
         self.btn_closeO.clicked.connect(self.click_closeO)
         self.btn_closeAr.clicked.connect(self.click_closeAr)
@@ -71,7 +72,36 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_regulateAr.clicked.connect(self.click_regulateAr)
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
-    
+
+    def start_readout(self):
+        global current_command 
+        a = '010F000200020101'
+        if current_command != a:
+            print('модуль получил глобальную команду')
+            thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
+            thread1.start()
+            thread1.join()
+            current_command = '010F000200020101'
+        else:
+            print('modul 1 made/ ')
+            thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
+            thread1.start()
+            thread1.join()
+            global flow_value
+            self.updatelabeltextO(flow_value)
+        timer = threading.Timer(2.0, self.second_part, args=(str,))
+        timer.start()
+ 
+    def second_part(self, str):
+        a = '020F000200020101'
+        print('modul 2 made /')
+        thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
+        thread1.start()
+        thread1.join()
+        global flow_value
+        self.updatelabeltextAr(flow_value)
+        self.start_readout()
+        
     def updatelabeltextAr(self, str):
         self.label_realflowAr.setText(str)
 
@@ -112,40 +142,55 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def fn_sendcmd(self, number):                                       # извлекаем содержимое ячеек
         print("def fn_sendcmd получило значение - ", number)                         # данные
         self.ed_id= number[0:2]                           # адрес устройства ID
-        print(self.ed_id)
+        #print(self.ed_id)
         self.ed_cmd=number[2:4]                           # номер команды
-        print(self.ed_cmd)
+        #print(self.ed_cmd)
         self.ed_adr=number[4:8]                           # адрес регистра
-        print(self.ed_adr)
+        #print(self.ed_adr)
         self.ed_count=number[8:17]                          # данные
-        print(self.ed_count)
+        #print(self.ed_count)
+        global flow_value
+        flow_value = str(random.randint(0,100))
+        sleep(1)
 
     def click_open0(self):
+        global current_command  
+        current_command = "010F000200020101"
         type_command = "010F000200020101"
         print("def click_openO выполнено")
         self.fn_sendcmd(type_command) 
 
     def click_openAr(self):
+        global current_command  
+        current_command = "020F000200020101"
         type_command = "020F000200020101"
         print("def click_openAr выполнено")
         self.fn_sendcmd(type_command) 
         
     def click_closeO(self):
+        global current_command  
+        current_command = "010F000200020102"
         type_command = "010F000200020102"
         print("def click_closeO выполнено")
         self.fn_sendcmd(type_command)
-        
+
     def click_closeAr(self):
+        global current_command  
+        current_command = "020F000200020102"
         type_command = "020F000200020102"
         print("def click_closeAr выполнено")
         self.fn_sendcmd(type_command)
         
     def click_regulateO(self):
+        global current_command  
+        current_command = "010F000200020100"
         type_command = "010F000200020100"
         print("def click_regulateO выполнено")
         self.fn_sendcmd(type_command)
         
     def click_regulateAr(self):
+        global current_command  
+        current_command = "020F000200020100"
         type_command = "020F000200020100"
         print("def click_regulateAr выполнено")
         self.fn_sendcmd(type_command)
@@ -166,6 +211,8 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             print("def click_installO выполнено", procent2)
             type_command = "01060004" + procent2
             print(type_command)
+            global current_command  
+            current_command = type_command
             self.fn_sendcmd(type_command)
         except: 
             self.show_error(value_flow)
@@ -186,9 +233,12 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             print("def click_installO выполнено", procent2)
             type_command = "02060004" + procent2
             print(type_command)
+            global current_command  
+            current_command = type_command
             self.fn_sendcmd(type_command)
         except: 
             self.show_error(value_flow)
+
 
     def show_error(self, number): #вывод ошибки 
         error = QMessageBox()
@@ -198,6 +248,9 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()
 
+    
+    
+    
 def main():                                                     # открытие главного окна
     app = QApplication(sys.argv)
     main_win = MainWindow()
