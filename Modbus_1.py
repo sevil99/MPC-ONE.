@@ -74,8 +74,9 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
         self.setupUi(self)
+        self.flow_value = ' '
         
-        self.btn_openO.clicked.connect(self.click_open0) #функции нажатия на кнопки
+        self.btn_openO.clicked.connect(self.click_openO) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
         self.btn_closeO.clicked.connect(self.click_closeO)
         self.btn_closeAr.clicked.connect(self.click_closeAr)
@@ -89,7 +90,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         #GPIO.setmode(GPIO.BCM)                                  # Инициализация пина RPi - Master (используется при MAX485)
         #GPIO.setup(DU_Pin_Rpi_Master, GPIO.OUT)
         #GPIO.output(DU_Pin_Rpi_Master, True)
-        self.setGeometry(80, 80, 809, 409)                        # расположение главновго окна
+        self.setGeometry(0, 0, 1024, 600)                        # расположение главновго окна
         #self.setWindowFlags(Qt.FramelessWindowHint)             # убирает шапку приложения
         #icon_switch_off = QtGui.QIcon()                         # картинка на кнопке ВЫХОД
         #icon_switch_off.addPixmap(QtGui.QPixmap("/home/pi/Desktop/Modbus/close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -98,36 +99,34 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
 
     def showEvent(self, event): #запускает программу при при её открытии 
         global current_command 
-        current_command = '010F000200020101'
+        current_command = '010300040002'
         self.start_readout()
 
     def start_readout(self):
         global current_command 
-        a = '010F000200020101'
+        a = '010300040002'
         if current_command != a:
             print('модуль получил глобальную команду')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
             thread1.start()
             thread1.join()
-            current_command = '010F000200020101'
+            current_command = '010300040002'
         else:
             print('modul 1 made/ ')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
             thread1.start()
             thread1.join()
-            global flow_value
-            self.updatelabeltextO(flow_value)
+            self.updatelabeltextO(self.flow_value)
         timer = threading.Timer(2.0, self.second_part, args=(str,))
         timer.start()
  
     def second_part(self, str):
-        a = '020F000200020101'
+        a = '020300040002'
         print('modul 2 made /')
         thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
         thread1.start()
         thread1.join()
-        global flow_value
-        self.updatelabeltextAr(flow_value)
+        self.updatelabeltextAr(self.flow_value)
         self.start_readout()
 
     def updatelabeltextAr(self, str):
@@ -282,9 +281,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                             crc2=self.ls_in[18:20]
                             result_hex_list.append(crc2)
                 result_hex_list_str=self.print_list2(result_hex_list)
-                result_hex_list_int = int(result_hex_list_str, 16)
-                global flow_value
-                flow_value = result_hex_list_int
+                print('gave result_hex_list_str', result_hex_list_str)
+                result_hex_list_str='0x' + result_hex_list_str[20:22] + result_hex_list_str[24:26]
+                print(result_hex_list_str)
+                result_hex_list_int = str(float.fromhex(result_hex_list_str)/100*90/100/1.45)
+                self.flow_value = result_hex_list_int
                 #self.TE_1.append(result_hex_list_str)               # выводим полученный пакет на экран
                 print("выводим полученный пакет")
                 crc2_=result_hex_list.pop(len(result_hex_list)-1)   # удаляем и запоминаем старое CRC
@@ -347,48 +348,42 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         current_command = "010F000200020101"
         type_command = "010F000200020101"
         print("def click_openO выполнено")
-        self.fn_sendcmd(type_command) 
 
     def click_openAr(self):
         global current_command  
         current_command = "020F000200020101"
         type_command = "020F000200020101"
         print("def click_openAr выполнено")
-        self.fn_sendcmd(type_command) 
         
     def click_closeO(self):
         global current_command  
         current_command = "010F000200020102"
         type_command = "010F000200020102"
         print("def click_closeO выполнено")
-        self.fn_sendcmd(type_command)
 
     def click_closeAr(self):
         global current_command  
         current_command = "020F000200020102"
         type_command = "020F000200020102"
         print("def click_closeAr выполнено")
-        self.fn_sendcmd(type_command)
         
     def click_regulateO(self):
         global current_command  
         current_command = "010F000200020100"
         type_command = "010F000200020100"
         print("def click_regulateO выполнено")
-        self.fn_sendcmd(type_command)
         
     def click_regulateAr(self):
         global current_command  
         current_command = "020F000200020100"
         type_command = "020F000200020100"
         print("def click_regulateAr выполнено")
-        self.fn_sendcmd(type_command)
         
     def click_installO(self):
-        value_flow = self.lineEdit.text() #значение из TextEdit в строку
+        value_flow_1 = self.lineEdit.text() #значение из TextEdit в строку
         try:
-            value_flow = float(value_flow)
-            procent = int((value_flow/90)*10000)
+            value_flow_1 = float(value_flow_1)
+            procent = int((value_flow_1/90)*10000*1.45)
             procent1 = hex(procent)
             procent1=str(procent1)
             print("отчивка", procent1)
@@ -402,9 +397,8 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             print(type_command)
             global current_command  
             current_command = type_command
-            self.fn_sendcmd(type_command)
         except: 
-            self.show_error(value_flow)
+            self.show_error(value_flow_1)
 
     def click_installAr(self):
         value_flow = self.text_givenAr.text() #значение из TextEdit в строку
@@ -424,7 +418,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             print(type_command)
             global current_command  
             current_command = type_command
-            self.fn_sendcmd(type_command)
         except: 
             self.show_error(value_flow)
 
