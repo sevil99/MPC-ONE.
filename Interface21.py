@@ -100,17 +100,20 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_installAr.clicked.connect(self.click_installAr)
         self.fakeButtonO.clicked.connect(self.show_keyboard_dialogO)
         self.fakeButtonO_2.clicked.connect(self.show_keyboard_dialogAr)
+        self.pushButton.clicked.connect(self.Exit_)                   # клик на кнопку ВЫХОД
 
-        #self.Exit.clicked.connect(self.Exit_)                   # клик на кнопку ВЫХОД
         #GPIO.setmode(GPIO.BCM)                                  # Инициализация пина RPi - Master (используется при MAX485)
         #GPIO.setup(DU_Pin_Rpi_Master, GPIO.OUT)
         #GPIO.output(DU_Pin_Rpi_Master, True)
-        self.setGeometry(0, 0, 1024, 600)                        # расположение главновго окна
-        #self.setWindowFlags(Qt.FramelessWindowHint)             # убирает шапку приложения
+        #self.setGeometry(0, 70, 1024, 600)                        # расположение главновго окна
+        self.setWindowFlags(Qt.FramelessWindowHint)             # убирает шапку приложения
         #icon_switch_off = QtGui.QIcon()                         # картинка на кнопке ВЫХОД
         #icon_switch_off.addPixmap(QtGui.QPixmap("/home/pi/Desktop/Modbus/close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         #self.Exit.setIcon(icon_switch_off)                      # добавляет иконку
-        #self.Exit.setIconSize(QtCore.QSize(57, 57))
+        
+    def Exit_(self):                                         # при выходе из программы
+        global current_command
+        current_command = 'Exit'   
 
     def show_keyboard_dialogO(self):
         dialog = RegulWindow(self)
@@ -131,27 +134,31 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def start_readout(self):
         global current_command 
         a = '010300040002'
-        if current_command != a:
-            print('модуль получил глобальную команду')
-            thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
-            thread1.start()
-            thread1.join()
-            current_command = '010300040002'
+        if current_command == 'Exit':
+            sleep(2)
+            self.close()
         else:
-            print('modul 1 made/ ')
-            thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
-            thread1.start()
-            thread1.join()
-            self.updatelabeltextO(self.flow_value)
-        timer = threading.Timer(0.5, self.second_part, args=(str,))
-        timer.start()
+            if current_command != a and current_command != 'Exit':
+                print('модуль получил глобальную команду')
+                self.thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
+                self.thread1.start()
+                self.thread1.join()
+                current_command = '010300040002'
+            else:
+                print('modul 1 made/ ')
+                self.thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
+                self.thread1.start()
+                self.thread1.join()
+                self.updatelabeltextO(self.flow_value)
+            self.timer = threading.Timer(0.5, self.second_part, args=(str,))
+            self.timer.start()
  
     def second_part(self, str):
         a = '020300040002'
         print('modul 2 made /')
-        thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
-        thread1.start()
-        thread1.join()
+        self.thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
+        self.thread1.start()
+        self.thread1.join()
         self.updatelabeltextAr(self.flow_value)
         self.start_readout()
 
@@ -208,47 +215,52 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             value_flow_1 = float(value_flow_1)
             procent = int((value_flow_1/90)*10000*1.45)
             procent1 = hex(procent)
-            procent1=str(procent1)
-            print("отчивка", procent1)
-            if len(procent1) < 6:
-                procent2 = "0" + procent1[2:6]
-                print(procent2)
+            if value_flow_1 > 90:
+                self.show_error("Значение должно быть не больше 90 л/с")
             else:
-                procent2 = procent1[2:6]
-            print("def click_installO выполнено", procent2)
-            type_command = "01060004" + procent2
-            print(type_command)
-            global current_command  
-            current_command = type_command
+                procent1=str(procent1)
+                print("отчивка", procent1)
+                if len(procent1) < 6:
+                    procent2 = "0" + procent1[2:6]
+                    print(procent2)
+                else:
+                    procent2 = procent1[2:6]
+                print("def click_installO выполнено", procent2)
+                type_command = "01060004" + procent2
+                print(type_command)
+                global current_command  
+                current_command = type_command
         except: 
-            self.show_error(value_flow_1)
+            self.show_error('Введено некорректное значение потока')
 
     def click_installAr(self):
-        value_flow = self.fakeLineEditO_2.text() #значение из TextEdit в строку
+        value_flow_1 = self.fakeLineEditO_2.text() #значение из TextEdit в строку
         try:
-            value_flow = float(value_flow)
-            procent = int((value_flow/90)*10000*1.45)
+            value_flow_1 = float(value_flow_1)
+            procent = int((value_flow_1/90)*10000*1.45)
             procent1 = hex(procent)
-            procent1=str(procent1)
-            print("отчивка", procent1)
-            if len(procent1) < 6:
-                procent2 = "0" + procent1[2:6]
-                print(procent2)
-            else:
-                procent2 = procent1[2:6]
-            print("def click_installO выполнено", procent2)
-            type_command = "02060004" + procent2
-            print(type_command)
-            global current_command  
-            current_command = type_command
+            if value_flow_1 > 90:
+                self.show_error("Значение должно быть не больше 90 л/с")
+                procent1=str(procent1)
+                print("отчивка", procent1)
+                if len(procent1) < 6:
+                    procent2 = "0" + procent1[2:6]
+                    print(procent2)
+                else:
+                    procent2 = procent1[2:6]
+                    print("def click_installO выполнено", procent2)
+                    type_command = "02060004" + procent2
+                    print(type_command)
+                    global current_command  
+                    current_command = type_command
         except: 
-            self.show_error(value_flow)
+            self.show_error('Введено некорректное значение потока')
 
 
-    def show_error(self, number): #вывод ошибки 
+    def show_error(self, str): #вывод ошибки 
         error = QMessageBox()
         error.setWindowTitle("Ошибка")
-        error.setText('Введено некорректное значение потока ')
+        error.setText(str)
         error.setIcon(QMessageBox.Warning)
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()

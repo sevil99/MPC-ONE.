@@ -32,7 +32,7 @@ background-color: rgb(74, 74, 74);</string>
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
+      <y>30</y>
       <width>1024</width>
       <height>400</height>
      </rect>
@@ -296,24 +296,6 @@ selection-color: rgb(60, 25, 255);</string>
        <string>Реальный</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit">
-      <property name="geometry">
-       <rect>
-        <x>770</x>
-        <y>60</y>
-        <width>181</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>40</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_11">
       <property name="geometry">
        <rect>
@@ -398,6 +380,49 @@ selection-color: rgb(60, 25, 255);</string>
        <string>Л/C</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="fakeButtonO">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>50</y>
+        <width>181</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>40</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: transparent;
+border: none;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLabel" name="fakeLineEditO">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>50</y>
+        <width>181</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>40</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
      <zorder>btn_installO</zorder>
      <zorder>btn_regulateO</zorder>
      <zorder>btn_openO</zorder>
@@ -408,11 +433,12 @@ selection-color: rgb(60, 25, 255);</string>
      <zorder>label_realflowO</zorder>
      <zorder>label_5</zorder>
      <zorder>label_10</zorder>
-     <zorder>lineEdit</zorder>
      <zorder>label_11</zorder>
      <zorder>label</zorder>
      <zorder>label_3</zorder>
      <zorder>label_4</zorder>
+     <zorder>fakeLineEditO</zorder>
+     <zorder>fakeButtonO</zorder>
     </widget>
     <widget class="QWidget" name="tab_4">
      <attribute name="title">
@@ -575,24 +601,6 @@ selection-color: rgb(60, 25, 255);</string>
        <string>Открыть Ar</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="text_givenAr">
-      <property name="geometry">
-       <rect>
-        <x>770</x>
-        <y>60</y>
-        <width>181</width>
-        <height>101</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>40</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_12">
       <property name="geometry">
        <rect>
@@ -698,6 +706,49 @@ selection-color: rgb(60, 25, 255);</string>
        <string>Л/C</string>
       </property>
      </widget>
+     <widget class="QLabel" name="fakeLineEditO_2">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>50</y>
+        <width>181</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>40</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="fakeButtonO_2">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>50</y>
+        <width>181</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>40</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: transparent;
+border: none;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
      <zorder>label_1</zorder>
      <zorder>btn_installAr</zorder>
      <zorder>btn_closeAr</zorder>
@@ -705,12 +756,13 @@ selection-color: rgb(60, 25, 255);</string>
      <zorder>label_realflowAr</zorder>
      <zorder>label_8</zorder>
      <zorder>btn_openAr</zorder>
-     <zorder>text_givenAr</zorder>
      <zorder>label_12</zorder>
      <zorder>label_13</zorder>
      <zorder>label_9</zorder>
      <zorder>label_14</zorder>
      <zorder>label_15</zorder>
+     <zorder>fakeLineEditO_2</zorder>
+     <zorder>fakeButtonO_2</zorder>
     </widget>
     <widget class="QWidget" name="tab_5">
      <attribute name="title">
@@ -748,6 +800,27 @@ selection-color: rgb(60, 25, 255);</string>
     </property>
     <property name="text">
      <string>All rights reserved. </string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>940</x>
+      <y>0</y>
+      <width>71</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>40</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 170, 0);</string>
+    </property>
+    <property name="text">
+     <string>✕</string>
     </property>
    </widget>
   </widget>

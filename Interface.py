@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Interface3.ui'
+# Form implementation generated from reading ui file 'Interface2.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -26,7 +26,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setStyleSheet("background-color: rgb(16, 16, 16);")
         self.centralwidget.setObjectName("centralwidget")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(0, 0, 1024, 400))
+        self.tabWidget.setGeometry(QtCore.QRect(0, 30, 1024, 400))
         self.tabWidget.setMinimumSize(QtCore.QSize(0, 231))
         self.tabWidget.setMaximumSize(QtCore.QSize(16777215, 400))
         font = QtGui.QFont()
@@ -146,6 +146,7 @@ class Ui_MainWindow(object):
         self.fakeButtonO.setFont(font)
         self.fakeButtonO.setStyleSheet("background-color: transparent;\n"
 "border: none;")
+        self.fakeButtonO.setText("")
         self.fakeButtonO.setObjectName("fakeButtonO")
         self.fakeLineEditO = QtWidgets.QLabel(self.tab_3)
         self.fakeLineEditO.setGeometry(QtCore.QRect(750, 50, 181, 101))
@@ -302,6 +303,13 @@ class Ui_MainWindow(object):
         self.label_17.setGeometry(QtCore.QRect(770, 490, 101, 31))
         self.label_17.setStyleSheet("color: rgb(255, 255, 255);")
         self.label_17.setObjectName("label_17")
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setGeometry(QtCore.QRect(940, 0, 71, 71))
+        font = QtGui.QFont()
+        font.setPointSize(40)
+        self.pushButton.setFont(font)
+        self.pushButton.setStyleSheet("background-color: rgb(255, 170, 0);")
+        self.pushButton.setObjectName("pushButton")
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
@@ -326,7 +334,6 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "MAX - 90 Л/C"))
         self.label_3.setText(_translate("MainWindow", "Л/C"))
         self.label_4.setText(_translate("MainWindow", "Л/C"))
-        self.fakeButtonO.setText(_translate("MainWindow", " "))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "O2"))
         self.btn_installAr.setText(_translate("MainWindow", "Установить Ar"))
         self.btn_closeAr.setText(_translate("MainWindow", "Закрыть Ar"))
@@ -344,6 +351,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Блок питания"))
         self.label_16.setText(_translate("MainWindow", "Product of Vasiliev&Vasiliev Embedded Software Technology."))
         self.label_17.setText(_translate("MainWindow", "All rights reserved. "))
+        self.pushButton.setText(_translate("MainWindow", "✕"))
 
 
 if __name__ == "__main__":
