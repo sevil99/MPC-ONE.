@@ -88,8 +88,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        #self.dialog = RegulWindow(self)
-        #self.dialog = RegulWindow2(self)
         self.flow_value = ' '
         
         self.btn_openO.clicked.connect(self.click_openO) #функции нажатия на кнопки
@@ -123,7 +121,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         dialog = RegulWindow2(self)
         dialog.show()
         dialog.exec()
-
 
     def showEvent(self, event): #запускает программу при при её открытии 
         global current_command 

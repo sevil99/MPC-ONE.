@@ -103,7 +103,6 @@ class RegulWindow(QDialog, Ui_Dialog):
         self.close()
 
     def reject_data(self):
-        print('команда сработала')
         self.close()
 
 class RegulWindow2(QDialog, Ui_Dialog):
@@ -181,20 +180,18 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
 
     def showEvent(self, event): #запускает программу при при её открытии 
         global current_command 
-        current_command = '010300040002'
+        current_command = '020300040002'
         self.start_readout()
 
     def start_readout(self):
         global current_command 
         a = '020300040002'
         if current_command != a:
-            print('модуль получил глобальную команду')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
             thread1.start()
             thread1.join()
             current_command = '020300040002'
         else:
-            print('modul 1 made/ ')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
             thread1.start()
             thread1.join()
@@ -204,7 +201,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
  
     def second_part(self, str):
         a = '010300040002'
-        print('modul 2 made /')
         thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
         thread1.start()
         thread1.join()
@@ -219,64 +215,40 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         number = str(round(number, 2))
         self.label_realflowO.setText(number)
 
-    def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части
-        print("def fn_sendcmd получило значение - ", number)          
+    def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части         
         self.ed_id= number[0:2]                           # адрес устройства ID
-        print(self.ed_id)
         self.ed_cmd=number[2:4]                           # номер команды
-        print(self.ed_cmd)
         self.ed_adr=number[4:8]                           # адрес регистра
-        print(self.ed_adr)
         self.ed_count=number[8:17]                          # данные
-        print(self.ed_count)
-        #self.ed_count=str(hex(4000))[2:len(str(hex(4000)))]
-        print(self.ed_count)
         global send_arr
         self.send_arr=[]                                        # разбивка на байты отправляемого массива (по смыслу)
         self.id_=self.get_bt(self.ed_id)
-        #print(self.id_)
         self.cmd=self.get_bt(self.ed_cmd)
-        #print(self.cmd)
         self.adrh, self.adrl=self.get_highlow(self.ed_adr)
-        #print(self.adrh)
-        #print(self.adrl)
         self.send_arr.append(hex(self.id_))
-        #print(hex(self.id_))
         self.send_arr.append(hex(self.cmd))
-        #print(hex(self.cmd))
         self.send_arr.append(hex(self.adrh))
-        #print(hex(self.adrh))
         self.send_arr.append(hex(self.adrl))
-        #print(hex(self.adrl))
         cmd_num=int(self.ed_cmd,16)                             # обработка разных по типу кадров (в зависимости от команды)
-        #print(self.ed_cmd)
-        #print(cmd_num)
         if cmd_num==3:                                          # чтение
             self.counth, self.countl=self.get_highlow(self.ed_count)
             self.send_arr.append(hex(self.counth))
             self.send_arr.append(hex(self.countl))
         elif cmd_num==6:                                        # запись одного регистра
             self.counth, self.countl=self.get_highlow(self.ed_count)
-            print(self.counth)
-            print(self.countl)
             self.send_arr.append(hex(self.counth))
-            print(hex(self.counth))
             self.send_arr.append(hex(self.countl))
-            print(hex(self.countl))
         elif cmd_num==15:                                       # групповая запись
             self.count_1=self.ed_count[:4]                      # вычленяем количество флагов
             self.count_2=self.ed_count[4:]                      # ввычленяем количество байт и данные
             if (len(self.count_2)<4):
-                #self.TE_1.setText("Ошибка в количестве данных")
-                print("function work")
+                print("Ошибка в количестве данных")
                 cmd_num=0
             else:
                 self.counth, self.countl=self.get_highlow(self.count_1)
                 self.send_arr.append(hex(self.counth))              # присоединяем 2 байта (1 и 2 половина количества флагов)
                 self.send_arr.append(hex(self.countl))
-
                 self.bytes=int(self.count_2[:2],16)                 # вычленяем количество байт и переводим в 10 сс
-
                 self.count_2=self.count_2[2:]                       # вычленяем данные
                 self.send_arr.append(hex(self.bytes))               # присоединяем 1 байт (количество байтов)
                 i=0
@@ -286,7 +258,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                     i=i+1
                     self.send_arr.append(hex(self.data))
         else:
-            #self.TE_1.setText("Такой команды нет")
             print("Такой команды нет")
 
         if (cmd_num==3 or cmd_num==6 or cmd_num==15):               # Если команда существует
@@ -294,23 +265,14 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             low,high=self.addcrc(self.send_arr)
             self.send_arr.append(low)                               # добавляем CRC
             self.send_arr.append(high)
-            #self.TE_1.setText("Запрос:")
-            #self.TE_1.append(self.print_list(self.send_arr))
-            print("Запрос:")
-            print(self.send_arr)
             self.result=bytes([int(x,16) for x in self.send_arr])   # переводим массив строк hex в байты (представляет некоторые байты символом ASCII это норма)
             s.write(self.result)                                    # отправлем собранный пакет
             self.ls_in=s.read(256)                                  # читаем собранный пакет
-            print(self.ls_in)
             self.ls_in=str("".join("\\x{:02x}".format(c) for c in self.ls_in)) # преобразование в нормальный формат
-            print(self.ls_in)
             result_hex_list=[]
             if len(self.ls_in)<1:                                    # проверка есть ли ответ
-                #self.TE_1.append("РРГ не отвечает")
                 print("РРГ не отвечает")
             else:
-                #self.TE_1.append("Принятый пакет:")
-                print("Принятый пакет:")
                 address=self.ls_in[2:4]                             # узнаём адрес устройства
                 result_hex_list.append(address)
                 command=self.ls_in[6:8]                             # узнаём номер команды
@@ -365,22 +327,19 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                             crc2=self.ls_in[18:20]
                             result_hex_list.append(crc2)
                 result_hex_list_str=self.print_list2(result_hex_list)
-                print('gave result_hex_list_str', result_hex_list_str)
                 result_hex_list_str='0x' + result_hex_list_str[20:22] + result_hex_list_str[24:26]
-                print(result_hex_list_str)
                 result_hex_list_int = float.fromhex(result_hex_list_str)/100*90/100
                 if result_hex_list_int > 190:
                     self.flow_value = 0
                 else:
                     self.flow_value = result_hex_list_int
                 #self.TE_1.append(result_hex_list_str)               # выводим полученный пакет на экран
-                print("выводим полученный пакет")
                 crc2_=result_hex_list.pop(len(result_hex_list)-1)   # удаляем и запоминаем старое CRC
                 crc1_=result_hex_list.pop(len(result_hex_list)-1)
                 crc1_new,crc2_new=self.addcrc(result_hex_list)      # считаем новое CRC для полученного сообщения
                 if (int(crc1,16)==int(crc1_new,16))&(int(crc2,16)==int(crc2_new,16)): # сравниваем CRC
                     #self.TE_1.append("Правильная контрольная сумма")
-                    print("Правильная контрольная сумма")
+                    nsb = 1
                 else:
                     #self.TE_1.append("Ошибочная контрольная сумма")
                     print("Ошибочная контрольная сумма")
@@ -433,32 +392,26 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def click_openO(self):
         global current_command  
         current_command = "020F000200020101"
-        print("def click_openO выполнено")
 
     def click_openAr(self):
         global current_command  
         current_command = "010F000200020101"
-        print("def click_openAr выполнено")
         
     def click_closeO(self):
         global current_command  
         current_command = "020F000200020102"
-        print("def click_closeO выполнено")
 
     def click_closeAr(self):
         global current_command  
         current_command = "010F000200020102"
-        print("def click_closeAr выполнено")
         
     def click_regulateO(self):
         global current_command  
         current_command = "020F000200020100"
-        print("def click_regulateO выполнено")
         
     def click_regulateAr(self):
         global current_command  
         current_command = "010F000200020100"
-        print("def click_regulateAr выполнено")
         
     def click_installO(self):
         value_flow_1 = self.fakeLineEditO.text() #значение из TextEdit в строку
@@ -467,15 +420,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             procent = int((value_flow_1/90)*10000)
             procent1 = hex(procent)
             procent1=str(procent1)
-            print("отчивка", procent1)
             if len(procent1) < 6:
                 procent2 = "0" + procent1[2:6]
-                print(procent2)
             else:
                 procent2 = procent1[2:6]
-            print("def click_installO выполнено", procent2)
             type_command = "02060004" + procent2
-            print(type_command)
             global current_command  
             current_command = type_command
         except: 
@@ -488,15 +437,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             procent = int((value_flow_1/90)*10000*1.45)
             procent1 = hex(procent)
             procent1=str(procent1)
-            print("отчивка", procent1)
             if len(procent1) < 6:
                 procent2 = "0" + procent1[2:6]
-                print(procent2)
             else:
                 procent2 = procent1[2:6]
-            print("def click_installO выполнено", procent2)
             type_command = "01060004" + procent2
-            print(type_command)
             global current_command  
             current_command = type_command
         except: 
