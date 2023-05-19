@@ -104,13 +104,13 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
 
     def start_readout(self):
         global current_command 
-        a = '010300040002'
+        a = '020300040002'
         if current_command != a:
             print('модуль получил глобальную команду')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(current_command,) )
             thread1.start()
             thread1.join()
-            current_command = '010300040002'
+            current_command = '020300040002'
         else:
             print('modul 1 made/ ')
             thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         timer.start()
  
     def second_part(self, str):
-        a = '020300040002'
+        a = '010300040002'
         print('modul 2 made /')
         thread1 = threading.Thread(target = self.fn_sendcmd, args=(a,) )
         thread1.start()
@@ -284,8 +284,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                 print('gave result_hex_list_str', result_hex_list_str)
                 result_hex_list_str='0x' + result_hex_list_str[20:22] + result_hex_list_str[24:26]
                 print(result_hex_list_str)
-                result_hex_list_int = str(float.fromhex(result_hex_list_str)/100*90/100/1.45)
-                self.flow_value = result_hex_list_int
+                result_hex_list_int = float.fromhex(result_hex_list_str)/100*90/100
+                if result_hex_list_int > 190:
+                    result_hex_list_int = 0
+                else:
+                    self.flow_value = result_hex_list_int
                 #self.TE_1.append(result_hex_list_str)               # выводим полученный пакет на экран
                 print("выводим полученный пакет")
                 crc2_=result_hex_list.pop(len(result_hex_list)-1)   # удаляем и запоминаем старое CRC
@@ -345,42 +348,57 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     
     def click_openO(self):
         global current_command  
-        current_command = "010F000200020101"
-        type_command = "010F000200020101"
+        current_command = "020F000200020101"
         print("def click_openO выполнено")
 
     def click_openAr(self):
         global current_command  
-        current_command = "020F000200020101"
-        type_command = "020F000200020101"
+        current_command = "010F000200020101"
         print("def click_openAr выполнено")
         
     def click_closeO(self):
         global current_command  
-        current_command = "010F000200020102"
-        type_command = "010F000200020102"
+        current_command = "020F000200020102"
         print("def click_closeO выполнено")
 
     def click_closeAr(self):
         global current_command  
-        current_command = "020F000200020102"
-        type_command = "020F000200020102"
+        current_command = "010F000200020102"
         print("def click_closeAr выполнено")
         
     def click_regulateO(self):
         global current_command  
-        current_command = "010F000200020100"
-        type_command = "010F000200020100"
+        current_command = "020F000200020100"
         print("def click_regulateO выполнено")
         
     def click_regulateAr(self):
         global current_command  
-        current_command = "020F000200020100"
-        type_command = "020F000200020100"
+        current_command = "010F000200020100"
         print("def click_regulateAr выполнено")
         
     def click_installO(self):
         value_flow_1 = self.lineEdit.text() #значение из TextEdit в строку
+        try:
+            value_flow_1 = float(value_flow_1)
+            procent = int((value_flow_1/90)*10000)
+            procent1 = hex(procent)
+            procent1=str(procent1)
+            print("отчивка", procent1)
+            if len(procent1) < 6:
+                procent2 = "0" + procent1[2:6]
+                print(procent2)
+            else:
+                procent2 = procent1[2:6]
+            print("def click_installO выполнено", procent2)
+            type_command = "02060004" + procent2
+            print(type_command)
+            global current_command  
+            current_command = type_command
+        except: 
+            self.show_error(value_flow_1)
+
+    def click_installAr(self):
+        value_flow_1 = self.text_givenAr.text() #значение из TextEdit в строку
         try:
             value_flow_1 = float(value_flow_1)
             procent = int((value_flow_1/90)*10000*1.45)
@@ -399,27 +417,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             current_command = type_command
         except: 
             self.show_error(value_flow_1)
-
-    def click_installAr(self):
-        value_flow = self.text_givenAr.text() #значение из TextEdit в строку
-        try:
-            value_flow = float(value_flow)
-            procent = int((value_flow/90)*10000*1.45)
-            procent1 = hex(procent)
-            procent1=str(procent1)
-            print("отчивка", procent1)
-            if len(procent1) < 6:
-                procent2 = "0" + procent1[2:6]
-                print(procent2)
-            else:
-                procent2 = procent1[2:6]
-            print("def click_installO выполнено", procent2)
-            type_command = "02060004" + procent2
-            print(type_command)
-            global current_command  
-            current_command = type_command
-        except: 
-            self.show_error(value_flow)
 
 
     def show_error(self, number): #вывод ошибки 
