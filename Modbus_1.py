@@ -15,10 +15,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets, uic 
 from time import time, sleep
-from PyQt5.QtCore import QBasicTimer, QDateTime, QThread
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QIcon, QFont, QPixmap
 import Interface
+from DialWind import Ui_Dialog
 
 # DU_Pin_Rpi_Master=18       # Пин, который определяет RPi - Master или Slave при использовании MAX485
 
@@ -69,6 +69,77 @@ CRC_Low=[
     0x48, 0x49, 0x89, 0x4B, 0x8B, 0x8A, 0x4A, 0x4E, 0x8E, 0x8F, 0x4F, 0x8D, 0x4D, 0x4C, 0x8C,
     0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
     0x40]
+
+class RegulWindow(QDialog, Ui_Dialog):
+    def __init__(self, root):
+        QDialog.__init__(self, root)
+        self.setupUi(self)
+        self.MainWindow = root
+        self.pushButton_13.clicked.connect(self.acept_data)
+        self.pushButton_14.clicked.connect(self.reject_data)
+        
+        self.pushButton_1.clicked.connect(lambda: self.add_text("1"))
+        self.pushButton_2.clicked.connect(lambda: self.add_text("2"))
+        self.pushButton_3.clicked.connect(lambda: self.add_text("3"))
+        self.pushButton_4.clicked.connect(lambda: self.add_text("4"))
+        self.pushButton_5.clicked.connect(lambda: self.add_text("5"))
+        self.pushButton_6.clicked.connect(lambda: self.add_text("6"))
+        self.pushButton_7.clicked.connect(lambda: self.add_text("7"))
+        self.pushButton_8.clicked.connect(lambda: self.add_text("8"))
+        self.pushButton_9.clicked.connect(lambda: self.add_text("9"))
+        self.pushButton_10.clicked.connect(lambda: self.add_text("0"))
+        self.pushButton_11.clicked.connect(lambda: self.add_text("."))
+        self.pushButton_12.clicked.connect(self.clear_text)
+
+    def add_text(self, text):
+        current_text = self.label_value_flow_Ar.text()
+        self.label_value_flow_Ar.setText(current_text + text)
+        
+    def clear_text(self):
+        self.label_value_flow_Ar.setText("")
+
+    def acept_data(self):
+        self.MainWindow.fakeLineEditO.setText(self.label_value_flow_Ar.text())
+        self.close()
+
+    def reject_data(self):
+        print('команда сработала')
+        self.close()
+
+class RegulWindow2(QDialog, Ui_Dialog):
+    def __init__(self, root):
+        QDialog.__init__(self, root)
+        self.setupUi(self)
+        self.MainWindow = root
+        self.pushButton_13.clicked.connect(self.acept_data)
+        self.pushButton_14.clicked.connect(self.reject_data)
+        
+        self.pushButton_1.clicked.connect(lambda: self.add_text("1"))
+        self.pushButton_2.clicked.connect(lambda: self.add_text("2"))
+        self.pushButton_3.clicked.connect(lambda: self.add_text("3"))
+        self.pushButton_4.clicked.connect(lambda: self.add_text("4"))
+        self.pushButton_5.clicked.connect(lambda: self.add_text("5"))
+        self.pushButton_6.clicked.connect(lambda: self.add_text("6"))
+        self.pushButton_7.clicked.connect(lambda: self.add_text("7"))
+        self.pushButton_8.clicked.connect(lambda: self.add_text("8"))
+        self.pushButton_9.clicked.connect(lambda: self.add_text("9"))
+        self.pushButton_10.clicked.connect(lambda: self.add_text("0"))
+        self.pushButton_11.clicked.connect(lambda: self.add_text("."))
+        self.pushButton_12.clicked.connect(self.clear_text)
+
+    def add_text(self, text):
+        current_text = self.label_value_flow_Ar.text()
+        self.label_value_flow_Ar.setText(current_text + text)
+        
+    def clear_text(self):
+        self.label_value_flow_Ar.setText("")
+
+    def acept_data(self):
+        self.MainWindow.fakeLineEditO_2.setText(self.label_value_flow_Ar.text())
+        self.close()
+
+    def reject_data(self):
+        self.close()
    
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
@@ -84,6 +155,8 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.btn_regulateAr.clicked.connect(self.click_regulateAr)
         self.btn_installO.clicked.connect(self.click_installO)
         self.btn_installAr.clicked.connect(self.click_installAr)
+        self.fakeButtonO.clicked.connect(self.show_keyboard_dialogO)
+        self.fakeButtonO_2.clicked.connect(self.show_keyboard_dialogAr)
         
 
         #self.Exit.clicked.connect(self.Exit_)                   # клик на кнопку ВЫХОД
@@ -96,6 +169,15 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         #icon_switch_off.addPixmap(QtGui.QPixmap("/home/pi/Desktop/Modbus/close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         #self.Exit.setIcon(icon_switch_off)                      # добавляет иконку
         #self.Exit.setIconSize(QtCore.QSize(57, 57))
+    def show_keyboard_dialogO(self):
+        dialog = RegulWindow(self)
+        dialog.show()
+        dialog.exec()
+
+    def show_keyboard_dialogAr(self):
+        dialog = RegulWindow2(self)
+        dialog.show()
+        dialog.exec()
 
     def showEvent(self, event): #запускает программу при при её открытии 
         global current_command 
@@ -129,11 +211,13 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         self.updatelabeltextAr(self.flow_value)
         self.start_readout()
 
-    def updatelabeltextAr(self, str):
-        self.label_realflowAr.setText(str)
+    def updatelabeltextAr(self, number):
+        number = str(round(number/1.45, 2))
+        self.label_realflowAr.setText(number)
 
-    def updatelabeltextO(self, str):
-        self.label_realflowO.setText(str)
+    def updatelabeltextO(self, number):
+        number = str(round(number, 2))
+        self.label_realflowO.setText(number)
 
     def fn_sendcmd(self, number):                          # передаем в эту функцию команду, которую она дальше разбивает на части
         print("def fn_sendcmd получило значение - ", number)          
@@ -286,7 +370,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                 print(result_hex_list_str)
                 result_hex_list_int = float.fromhex(result_hex_list_str)/100*90/100
                 if result_hex_list_int > 190:
-                    result_hex_list_int = 0
+                    self.flow_value = 0
                 else:
                     self.flow_value = result_hex_list_int
                 #self.TE_1.append(result_hex_list_str)               # выводим полученный пакет на экран
@@ -377,7 +461,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         print("def click_regulateAr выполнено")
         
     def click_installO(self):
-        value_flow_1 = self.lineEdit.text() #значение из TextEdit в строку
+        value_flow_1 = self.fakeLineEditO.text() #значение из TextEdit в строку
         try:
             value_flow_1 = float(value_flow_1)
             procent = int((value_flow_1/90)*10000)
@@ -398,7 +482,7 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             self.show_error(value_flow_1)
 
     def click_installAr(self):
-        value_flow_1 = self.text_givenAr.text() #значение из TextEdit в строку
+        value_flow_1 = self.fakeLineEditO_2.text() #значение из TextEdit в строку
         try:
             value_flow_1 = float(value_flow_1)
             procent = int((value_flow_1/90)*10000*1.45)
@@ -418,7 +502,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         except: 
             self.show_error(value_flow_1)
 
-
     def show_error(self, number): #вывод ошибки 
         error = QMessageBox()
         error.setWindowTitle("Ошибка")
@@ -426,7 +509,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         error.setIcon(QMessageBox.Warning)
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()
-
 
 def main():                                                     # открытие главного окна
     app = QApplication(sys.argv)
