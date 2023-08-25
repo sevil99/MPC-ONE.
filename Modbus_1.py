@@ -19,7 +19,7 @@ from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtGui import QIcon, QFont, QPixmap
 import Interface
 from DialWind import Ui_Dialog
-
+from ExitWindow import Ui_DialogExit
 # DU_Pin_Rpi_Master=18       # Пин, который определяет RPi - Master или Slave при использовании MAX485
 
 s=serial.Serial(                                                # подключение и инициализация порта
@@ -139,12 +139,18 @@ class RegulWindow2(QDialog, Ui_Dialog):
 
     def reject_data(self):
         self.close()
+
+class ExitWindow(QDialog, Ui_DialogExit):
+    def __init__(self, root):
+        QDialog.__init__(self, root)
+        self.setupUi(self)
+        self.MainWindow = root
    
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        self.flow_value = ' '
+        self.flow_value = 1
         
         self.btn_openO.clicked.connect(self.click_openO) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
@@ -190,7 +196,11 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         global current_command 
         a = '020300040002'
         if current_command == 'Exit':
-            sleep(3)
+            sleep(2)
+            print('Идет выключение')
+            self.fn_sendcmd('010F000200020102')
+            self.fn_sendcmd('020F000200020102')
+            self.ExitWindow.close()
             self.close()
         else:
             if current_command != a:
@@ -352,9 +362,12 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
                     print("Ошибочная контрольная сумма")
 
     def Exit_(self):                                         # при выходе из программы
-        s.close()
+        print('Активирован выход')
+        self.ExitWindow = ExitWindow(self)
+        self.ExitWindow.show()
+        #self.ExitWindow.exec()
         global current_command
-        current_command = 'Exit'                                            # закрываем главное окно
+        current_command = 'Exit'                                       
 
     def get_bt(self, tmps):                                     # извлекаем число из поля txt
         bt=int(tmps[-2:],16)
@@ -448,14 +461,15 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
             procent1 = hex(procent)
             if value_flow_1 > 90:
                 self.show_error("Значение должно быть не больше 90 л/с")
+            else:
                 procent1=str(procent1)
                 if len(procent1) < 6:
                     procent2 = "0" + procent1[2:6]
                 else:
                     procent2 = procent1[2:6]
-                    type_command = "01060004" + procent2
-                    global current_command  
-                    current_command = type_command
+                type_command = "01060004" + procent2
+                global current_command  
+                current_command = type_command
         except: 
             self.show_error('Введено некорректное значение потока')
 

@@ -1,17 +1,20 @@
 
 import sys
 import threading
-import time
+from time import time, sleep
 import random 
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets, uic 
-from time import time, sleep
 from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import QCoreApplication, QBasicTimer, QDateTime, Qt, QSize, QTimer
 import Interface
 
 from DialWind import Ui_Dialog
+from ExitWindow import Ui_DialogExit
+
+#исправить функцию установки, там ошибки
+
 
 class RegulWindow(QDialog, Ui_Dialog):
     def __init__(self, root):
@@ -84,11 +87,17 @@ class RegulWindow2(QDialog, Ui_Dialog):
     def reject_data(self):
         self.close()
 
+class ExitWindow(QDialog, Ui_DialogExit):
+    def __init__(self, root):
+        QDialog.__init__(self, root)
+        self.setupUi(self)
+        self.MainWindow = root
+
 class MainWindow(QMainWindow, Interface.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__()
         self.setupUi(self)
-        self.flow_value = ' '
+        self.flow_value = 1
         
         self.btn_openO.clicked.connect(self.click_openO) #функции нажатия на кнопки
         self.btn_openAr.clicked.connect(self.click_openAr)
@@ -112,8 +121,12 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         #self.Exit.setIcon(icon_switch_off)                      # добавляет иконку
         
     def Exit_(self):                                         # при выходе из программы
+        print('Активирован выход')
+        self.ExitWindow = ExitWindow(self)
+        self.ExitWindow.show()
+        #self.ExitWindow.exec()
         global current_command
-        current_command = 'Exit'   
+        current_command = 'Exit'
 
     def show_keyboard_dialogO(self):
         dialog = RegulWindow(self)
@@ -136,6 +149,10 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         a = '010300040002'
         if current_command == 'Exit':
             sleep(2)
+            print('Идет выключение')
+            self.fn_sendcmd('010F000200020102')
+            self.fn_sendcmd('020F000200020102')
+            self.ExitWindow.close()
             self.close()
         else:
             if current_command != a and current_command != 'Exit':
@@ -213,49 +230,45 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         value_flow_1 = self.fakeLineEditO.text() #значение из TextEdit в строку
         try:
             value_flow_1 = float(value_flow_1)
-            procent = int((value_flow_1/90)*10000*1.45)
+            procent = int((value_flow_1/90)*10000)
             procent1 = hex(procent)
             if value_flow_1 > 90:
                 self.show_error("Значение должно быть не больше 90 л/с")
             else:
                 procent1=str(procent1)
-                print("отчивка", procent1)
                 if len(procent1) < 6:
                     procent2 = "0" + procent1[2:6]
-                    print(procent2)
                 else:
                     procent2 = procent1[2:6]
-                print("def click_installO выполнено", procent2)
-                type_command = "01060004" + procent2
-                print(type_command)
+                type_command = "02060004" + procent2
                 global current_command  
                 current_command = type_command
         except: 
             self.show_error('Введено некорректное значение потока')
 
     def click_installAr(self):
+        print('click installAr')
         value_flow_1 = self.fakeLineEditO_2.text() #значение из TextEdit в строку
         try:
+            print('try dona')
             value_flow_1 = float(value_flow_1)
             procent = int((value_flow_1/90)*10000*1.45)
             procent1 = hex(procent)
             if value_flow_1 > 90:
                 self.show_error("Значение должно быть не больше 90 л/с")
+            else:
+                print('else done')
                 procent1=str(procent1)
-                print("отчивка", procent1)
                 if len(procent1) < 6:
                     procent2 = "0" + procent1[2:6]
-                    print(procent2)
                 else:
                     procent2 = procent1[2:6]
-                    print("def click_installO выполнено", procent2)
-                    type_command = "02060004" + procent2
-                    print(type_command)
-                    global current_command  
-                    current_command = type_command
+                type_command = "01060004" + procent2
+                print('type_command', type_command)
+                global current_command  
+                current_command = type_command
         except: 
             self.show_error('Введено некорректное значение потока')
-
 
     def show_error(self, str): #вывод ошибки 
         error = QMessageBox()
@@ -264,7 +277,6 @@ class MainWindow(QMainWindow, Interface.Ui_MainWindow):
         error.setIcon(QMessageBox.Warning)
         error.setStandardButtons(QMessageBox.Ok)
         error.exec()
-
 
 def main():                                                     # открытие главного окна
     app = QApplication(sys.argv)
